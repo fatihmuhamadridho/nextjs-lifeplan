@@ -1,0 +1,132 @@
+.heading h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+.heading p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.stat p {
+  font-size: 12px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 18px;
+  margin: 24px 0;
+}
+.stat {
+  padding: 20px;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: white;
+}
+.stat h2 {
+  margin: 8px 0 0;
+  font-size: 24px;
+}
+.toolbar {
+  margin-bottom: 18px;
+}
+.tableContainer {
+  overflow: hidden;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: #fff;
+}
+.tableContainer th {
+  background: #fafbfd;
+  color: #8392a7;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tableContainer td,
+.tableContainer :global(.mantine-Text-root),
+.tableContainer :global(.mantine-Anchor-root) {
+  font-size: 12px;
+}
+.tableContainer :global(.mantine-Badge-root) {
+  font-size: 10px;
+  height: auto;
+  min-height: 24px;
+  padding: 4px 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+}
+.taskForm {
+  display: grid;
+  gap: 16px;
+}
+.formColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+.taskForm :global(.mantine-InputWrapper-label) {
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.taskForm :global(.mantine-Input-input) {
+  font-size: 13px;
+  min-height: 38px;
+}
+.taskForm :global(.mantine-InputWrapper-description) {
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.linkedGoal :global(.mantine-Input-input) {
+  background: #f7f9fc;
+  color: #647187;
+}
+.progressSettings {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e8edf4;
+  border-radius: 10px;
+  background: #fafbfd;
+}
+@media (max-width: 480px) {
+  .formColumns {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .stats {
+    gap: 8px;
+  }
+  .stat {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .heading {
+    gap: 14px;
+  }
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .toolbar > div {
+    width: 100%;
+  }
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .stats {
+    gap: 12px;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+}

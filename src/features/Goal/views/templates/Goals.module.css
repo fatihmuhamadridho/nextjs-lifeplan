@@ -1,0 +1,163 @@
+.heading h1 {
+  margin: 0 0 5px;
+  font-size: 28px;
+}
+
+.filters {
+  gap: 10px;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+.emptyState {
+  display: flex;
+  min-height: 340px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 44px 24px;
+  border: 1px solid #e5eaf1;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+.emptyIcon {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  place-items: center;
+  border: 1px solid #dce8ff;
+  border-radius: 22px;
+  background: #f0f6ff;
+  color: #2864e8;
+}
+.emptyState h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+.emptyState p {
+  max-width: 430px;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.goalRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 78px;
+  padding: 14px 16px;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+}
+
+.goalIcon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  color: #16354a;
+}
+
+.goalInfo {
+  min-width: 200px;
+  flex: 1;
+}
+
+.goalInfo p {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+
+.goalTitle {
+  color: #172033;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.goalTitle:hover {
+  color: #2864e8;
+}
+
+.progress {
+  width: 18%;
+}
+
+.menu {
+  position: absolute;
+  z-index: 2;
+  top: 58px;
+  right: 18px;
+  display: grid;
+  padding: 8px;
+  box-shadow: 0 8px 28px #17203324;
+}
+
+@media (max-width: 760px) {
+  .goalRow {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .goalInfo {
+    min-width: calc(100% - 60px);
+  }
+
+  .progress {
+    width: 55%;
+    margin-left: 56px;
+  }
+}
+
+@media (max-width: 760px) {
+  .heading {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .heading h1 {
+    font-size: 25px;
+  }
+  .goalInfo {
+    min-width: 0;
+    flex-basis: calc(100% - 70px);
+  }
+  .progress {
+    margin-left: 0;
+    width: 50%;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .goalRow {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) 60px 95px 36px;
+    gap: 12px;
+  }
+  .goalInfo {
+    min-width: 0;
+  }
+  .progress {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    width: 100%;
+  }
+  .goalRow > b {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .goalRow > :nth-child(5) {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .goalRow > button {
+    grid-column: 5;
+    grid-row: 1;
+  }
+}

@@ -1,0 +1,73 @@
+.overlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #101b2c66;
+  backdrop-filter: blur(5px);
+}
+
+.dialog {
+  display: grid;
+  width: min(620px, 100%);
+  gap: 20px;
+  padding: 26px;
+}
+
+.dialog h3 {
+  margin: 0;
+}
+
+.fields {
+  display: grid;
+  gap: 16px;
+}
+
+.fields label:not(:global(.mantine-InputWrapper-label)) {
+  display: grid;
+  gap: 7px;
+  color: #34445a;
+  font-size: 13px;
+}
+
+.fields input,
+.fields select,
+.fields textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #dce3ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+}
+
+.fields textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.actions {
+  padding-top: 12px;
+  border-top: 1px solid #edf0f5;
+}
+
+@media (max-width: 760px) {
+  .overlay {
+    padding: 12px;
+    overflow-y: auto;
+  }
+  .dialog {
+    padding: 20px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+  .fields input,
+  .fields select,
+  .fields textarea {
+    font-size: 16px;
+  }
+}

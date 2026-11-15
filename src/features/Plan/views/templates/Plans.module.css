@@ -1,0 +1,135 @@
+.heading h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+}
+.heading > div:first-child {
+  max-width: 720px;
+}
+.heading p {
+  margin: 0;
+  line-height: 1.5;
+}
+.toolbar {
+  display: flex;
+  gap: 12px;
+}
+.toolbar {
+  align-items: center;
+}
+.search {
+  width: 290px;
+  min-width: 0;
+}
+.goalFilter {
+  width: 230px;
+}
+.sortFilter {
+  width: 180px;
+}
+.filters {
+  flex-wrap: wrap;
+}
+.tableWrap {
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: #fff;
+}
+.tableScroll {
+  overflow-x: auto;
+}
+.paginationFooter {
+  border-top: 1px solid #e5eaf1;
+}
+.table {
+  width: 100%;
+  min-width: 900px;
+  border: 0;
+  border-collapse: collapse;
+  border-radius: 0;
+  background: #fff;
+  overflow: hidden;
+}
+.table th {
+  padding: 16px 12px;
+  border-bottom: 1px solid #e8edf4;
+  background: #fbfcfe;
+  color: #8b9bb0;
+  font-size: 11px;
+  text-align: left;
+  white-space: nowrap;
+}
+.table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #edf0f5;
+  color: #34445a;
+  font-size: 13px;
+}
+.table tbody tr {
+  cursor: pointer;
+}
+.table tbody tr:hover {
+  background: #f8faff;
+}
+.table td:first-child {
+  color: #172033;
+  font-weight: 600;
+}
+.table td:nth-child(4) {
+  min-width: 110px;
+}
+.table td:nth-child(4) .mantine-Progress-root {
+  margin-top: 7px;
+}
+.statusBadge {
+  height: auto;
+  min-height: 24px;
+  padding: 4px 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .toolbar {
+    width: 100%;
+  }
+  .search {
+    width: 100%;
+    min-width: 0;
+  }
+  .filters > div {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .goalFilter,
+  .sortFilter {
+    flex: 1;
+    min-width: 130px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+  .heading {
+    align-items: flex-start;
+  }
+  .heading > div:first-child {
+    max-width: 100%;
+  }
+  .toolbar {
+    width: 100%;
+  }
+  .search {
+    flex: 1;
+    min-width: 0;
+  }
+  .filters {
+    align-items: stretch;
+  }
+  .filters > div {
+    flex-wrap: wrap;
+  }
+}

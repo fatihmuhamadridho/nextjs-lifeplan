@@ -1,0 +1,41 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f9fc;
+  color: #172033;
+  font-family: Arial, sans-serif;
+}
+
+.main {
+  margin-left: 256px;
+  width: calc(100% - 256px);
+  min-width: 0;
+  flex: 1;
+}
+
+@media (max-width: 1050px) {
+  .main {
+    margin-left: 210px;
+    width: calc(100% - 210px);
+  }
+}
+
+.content {
+  padding: 32px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 1023px) {
+  .main {
+    margin-left: 0;
+    width: 100%;
+  }
+  .shell {
+    display: block;
+  }
+
+  .content {
+    padding: 20px 14px;
+  }
+}

@@ -1,0 +1,61 @@
+.trigger {
+  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 8px;
+  border-radius: 10px;
+  color: #172033;
+}
+.trigger:hover {
+  background: #eef4ff;
+}
+.trigger:focus-visible {
+  outline: 2px solid #2864e8;
+  outline-offset: 2px;
+}
+.name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.trigger > svg {
+  flex-shrink: 0;
+  color: #8392a7;
+}
+.triggerOpened {
+  background: #eef4ff;
+}
+.dropdown {
+  font-family: Arial, sans-serif;
+  max-width: calc(100vw - 24px);
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 12px 32px #17203318,
+    0 2px 6px #1720330a;
+}
+.accountHeader {
+  padding: 12px 10px;
+}
+.item {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.itemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+.chevronOpened {
+  transform: rotate(-90deg);
+}

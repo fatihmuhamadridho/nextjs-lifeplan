@@ -1,0 +1,1011 @@
+@reference 'tailwindcss';
+
+.page {
+  --blue: #2463eb;
+  --ink: #101827;
+  --muted: #718096;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1280px;
+  container-type: inline-size;
+  margin-inline: auto;
+  background: white;
+  color: var(--ink);
+  font-family: Arial, sans-serif;
+  padding-bottom: 0;
+}
+
+.nav {
+  height: clamp(50px, 6.3cqw, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: clamp(15px, 3vw, 48px);
+  border-bottom: 1px solid #edf0f5;
+  gap: clamp(20px, 3.5cqw, 40px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1cqw, 10px);
+  color: var(--ink);
+  font-size: clamp(12px, 1.5cqw, 18px);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  background: var(--blue);
+  color: white;
+  width: clamp(22px, 2.8cqw, 32px);
+  height: clamp(22px, 2.8cqw, 32px);
+  border-radius: 8px;
+}
+
+.navLinks {
+  display: flex;
+  width: auto;
+  gap: clamp(20px, 3.8cqw, 42px);
+  margin: auto;
+}
+
+.navLinks a,
+.signIn,
+.footer > a:last-child {
+  color: #566273;
+  font-size: clamp(10px, 1.25cqw, 14px);
+  text-decoration: none;
+}
+
+.nav > button,
+.actions button,
+.previewCopy button,
+.closing button,
+.mobileCta button {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+  border-radius: 7px;
+  box-shadow: 0 3px 7px #2463eb35;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: clamp(10px, 1.25cqw, 14px) !important;
+  padding-inline: 8px !important;
+}
+
+.nav > button {
+  min-width: max-content;
+  min-height: clamp(26px, 3.4cqw, 40px) !important;
+}
+
+.buttonContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 0.9cqw, 10px);
+  width: auto;
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.menu {
+  display: none;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 390px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: clamp(40px, 5cqw, 64px) clamp(15px, 3vw, 48px);
+  gap: clamp(28px, 5.7cqw, 72px);
+}
+
+.hero::before {
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 75% 30%, #e8f1ff, transparent 58%), #f8fafc;
+  content: '';
+}
+
+.heroCopy {
+  max-width: 50cqw;
+}
+
+.eyebrow {
+  font-size: clamp(9px, 1.25cqw, 12px);
+  color: var(--blue);
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  display: inline-block;
+  padding: clamp(3px, 0.5cqw, 6px) clamp(8px, 1.25cqw, 14px);
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #dceaff;
+}
+
+.hero h1 {
+  font-size: clamp(34px, 4.3cqw, 56px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: clamp(-1.4px, -0.12cqw, -1px);
+  margin: clamp(12px, 1.9cqw, 22px) 0 clamp(8px, 1.3cqw, 15px);
+  max-width: 50cqw;
+}
+
+.heroCopy > p,
+.previewCopy > p,
+.closing p {
+  font-size: clamp(12px, 1.5cqw, 16px);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.5cqw, 18px);
+  margin-top: clamp(18px, 2.8cqw, 28px);
+}
+
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 0.9cqw, 10px);
+  padding: 0 14px;
+  min-height: clamp(32px, 4cqw, 42px);
+  align-self: center;
+  border: 1px solid #e4e8ef;
+  border-radius: 9px;
+  background: white;
+  color: var(--ink);
+  font-size: clamp(10px, 1.25cqw, 14px);
+  text-decoration: none;
+}
+
+.proof {
+  display: flex;
+  gap: clamp(18px, 3cqw, 32px);
+  margin-top: clamp(22px, 3.8cqw, 38px);
+  padding-top: clamp(10px, 1.8cqw, 18px);
+  border-top: 1px solid #e8edf4;
+  color: #526174;
+  font-size: clamp(9px, 1.2cqw, 13px);
+}
+
+.proof > span {
+  margin: 0;
+}
+
+.proofItem {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(6px, 0.9cqw, 10px);
+  width: clamp(125px, 18cqw, 190px);
+}
+
+.proofItem > span {
+  margin: 0;
+}
+
+.proofIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 clamp(22px, 2.8cqw, 32px);
+  width: clamp(22px, 2.8cqw, 32px);
+  height: clamp(22px, 2.8cqw, 32px);
+  border-radius: 50%;
+  background: #edf4ff;
+  color: var(--blue);
+}
+
+.heroPhoto {
+  display: none;
+}
+
+.quote {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  padding: 15px;
+  background: #ffffffed;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.quote small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.features {
+  padding: clamp(24px, 3.2cqw, 42px) clamp(15px, 3vw, 48px);
+}
+
+.goalGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(10px, 1.2cqw, 16px);
+}
+
+.goalCard {
+  border: 1px solid #e9edf3 !important;
+  box-shadow: 0 8px 20px #17243b0b !important;
+  background: #fff;
+  min-height: clamp(129px, 16.5cqw, 210px);
+  padding: clamp(14px, 1.8cqw, 24px) !important;
+  border-radius: clamp(12px, 1.5cqw, 18px) !important;
+}
+
+.goalIcon {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: clamp(30px, 3.8cqw, 42px);
+  height: clamp(30px, 3.8cqw, 42px);
+  background: #eff6ff;
+  color: var(--blue);
+  border-radius: 10px;
+  font-size: clamp(16px, 2cqw, 22px);
+}
+
+.goalCard:nth-child(3) .goalIcon {
+  color: #8b5cf6;
+  background: #f5f0ff;
+}
+
+.goalCard:nth-child(4) .goalIcon {
+  color: #e28a00;
+  background: #fff8e8;
+}
+
+.goalCard h3,
+.step h3 {
+  font-weight: 700;
+  font-size: clamp(11px, 1.4cqw, 17px);
+  margin: clamp(10px, 1.8cqw, 18px) 0 clamp(5px, 0.9cqw, 10px);
+}
+
+.goalCard p,
+.step p {
+  font-size: clamp(8.5px, 1.1cqw, 13px);
+  line-height: 1.45;
+  color: var(--muted);
+  margin: 0;
+}
+
+.how {
+  position: relative;
+  isolation: isolate;
+  text-align: center;
+  padding: clamp(45px, 5.7cqw, 72px) 15px clamp(50px, 6.3cqw, 80px);
+}
+
+.how::before {
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #f8fafc;
+  content: '';
+}
+
+.how h2,
+.previewCopy h2,
+.closing h2 {
+  font-size: clamp(22px, 2.8cqw, 34px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+}
+
+.how h2 {
+  max-width: 66cqw;
+  margin: clamp(8px, 1cqw, 14px) auto 0;
+}
+
+.how > .eyebrow {
+  margin: 0;
+  padding: clamp(2px, 0.35cqw, 4px) clamp(8px, 1cqw, 12px);
+  font-size: clamp(9px, 1.1cqw, 12px);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(44px, 5.6cqw, 72px);
+  max-width: 80cqw;
+  margin: clamp(28px, 4cqw, 48px) auto 0;
+  text-align: left;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  gap: clamp(10px, 1.5cqw, 18px);
+  padding: clamp(12px, 1.5cqw, 20px);
+  border: 1px solid #e7ecf3;
+  border-radius: clamp(12px, 1.5cqw, 18px);
+  background: white;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -27px;
+  width: 7px;
+  height: 7px;
+  border-top: 1px solid #b8c4d4;
+  border-right: 1px solid #b8c4d4;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.step .goalIcon {
+  width: clamp(34px, 4.3cqw, 48px);
+  height: clamp(34px, 4.3cqw, 48px);
+  flex: none;
+}
+
+.step .goalIcon b {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  background: #bfdbfe;
+  border-radius: 50%;
+  font-size: 9px;
+  padding: 3px;
+}
+
+.step h3 {
+  margin: 1px 0 5px;
+}
+
+.preview {
+  display: grid;
+  grid-template-columns: 0.63fr 1.37fr;
+  align-items: center;
+  gap: clamp(28px, 3.5cqw, 44px);
+  padding: clamp(48px, 6cqw, 76px) clamp(15px, 3vw, 48px);
+}
+
+.previewCopy h2 {
+  font-size: clamp(22px, 3cqw, 38px);
+  max-width: 100%;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: clamp(108px, 13.7cqw, 176px) minmax(0, 1fr);
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  justify-self: end;
+  border: 1px solid #e6eaf0;
+  border-radius: clamp(14px, 1.8cqw, 22px);
+  padding: 0;
+  box-shadow: 0 16px 35px #12213a20;
+  background: #fff;
+  overflow: hidden;
+}
+
+.dashboardSidebar {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(12px, 1.5cqw, 18px) clamp(8px, 1cqw, 12px) clamp(10px, 1.25cqw, 16px);
+  border-right: 1px solid #edf0f5;
+  min-height: clamp(330px, 42cqw, 540px);
+  color: #78859a;
+  font-size: clamp(8px, 1cqw, 12px);
+}
+
+.dashboardBrand {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.6cqw, 7px);
+  color: var(--ink);
+  font-size: clamp(9px, 1.15cqw, 13px);
+  font-weight: 700;
+  margin: 0;
+  padding: 0 4px clamp(10px, 1.5cqw, 18px);
+}
+
+.dashboardBrand svg {
+  color: var(--blue);
+}
+
+.dashboardNav {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.5cqw, 7px);
+}
+
+.dashboardNav > span,
+.dashboardProfile {
+  display: flex;
+  align-items: center;
+  gap: clamp(5px, 0.75cqw, 9px);
+  border-radius: 5px;
+  padding: clamp(4px, 0.6cqw, 7px) 4px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.dashboardNavActive {
+  background: #edf4ff;
+  color: var(--blue);
+}
+
+.dashboardProfile {
+  margin-top: auto;
+  border-top: 1px solid #edf0f5;
+  border-radius: 0;
+  padding-top: clamp(8px, 1cqw, 12px);
+}
+
+.dashboardMain {
+  min-width: 0;
+  padding: clamp(10px, 1.25cqw, 16px);
+}
+
+.dashHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #edf0f5;
+  padding-bottom: clamp(8px, 1cqw, 12px);
+  font-size: clamp(9px, 1.1cqw, 13px);
+}
+
+.dashHead > :first-child,
+.dashHead > :last-child {
+  width: auto;
+}
+
+.dashHead h3 {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.5cqw, 6px);
+  font-size: clamp(11px, 1.4cqw, 17px);
+  margin: 0 0 2px;
+}
+
+.dashHead small {
+  margin: 0;
+}
+
+.dashHead small {
+  color: #97a3b4;
+  font-size: clamp(7px, 0.9cqw, 11px);
+}
+
+.dashboardDate {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.6cqw, 7px);
+  color: #8793a5;
+  font-size: clamp(7px, 0.9cqw, 11px);
+}
+
+.dashboard h3 {
+  font-size: clamp(11px, 1.4cqw, 17px);
+  margin: 0;
+}
+
+.dashboard small {
+  color: var(--muted);
+  font-size: clamp(7px, 0.9cqw, 11px);
+  margin: 0;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(5px, 0.65cqw, 9px);
+  margin: clamp(8px, 1cqw, 13px) 0;
+}
+
+.metricCard {
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  padding: clamp(6px, 0.8cqw, 10px);
+  border-radius: clamp(6px, 0.8cqw, 10px);
+  color: var(--muted);
+  font-size: clamp(7px, 0.9cqw, 11px);
+}
+
+.metricCard > span,
+.metricCard > b,
+.metricCard > small {
+  margin: 0;
+}
+
+.metricCard b {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(12px, 1.5cqw, 19px);
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.metricCard small {
+  display: block;
+  font-size: clamp(6px, 0.75cqw, 9px);
+  margin-top: 1px;
+}
+
+.dashBottom {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(6px, 0.8cqw, 10px);
+}
+
+.dashboardPanel {
+  min-width: 0;
+  padding: clamp(7px, 0.9cqw, 11px);
+  border: 1px solid #edf0f5;
+  border-radius: clamp(6px, 0.8cqw, 10px);
+  font-size: clamp(7px, 0.9cqw, 11px);
+}
+
+.panelHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(8px, 1cqw, 12px);
+  margin-bottom: clamp(5px, 0.7cqw, 9px);
+}
+
+.panelHeading > b,
+.panelHeading > span {
+  margin: 0;
+}
+
+.panelHeading > span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--blue);
+  font-size: clamp(6px, 0.75cqw, 9px);
+}
+
+.goalProgress {
+  margin-top: clamp(5px, 0.7cqw, 9px);
+}
+
+.goalProgress > span {
+  display: flex;
+  align-items: center;
+  gap: clamp(3px, 0.4cqw, 5px);
+  white-space: nowrap;
+  color: #526174;
+  font-size: clamp(6px, 0.8cqw, 10px);
+  margin: 0;
+}
+
+.goalProgress > span b {
+  margin-left: auto;
+  color: #536277;
+}
+
+.goalProgress > div {
+  height: clamp(3px, 0.35cqw, 5px);
+  margin-top: 2px;
+  border-radius: 3px;
+  background: #e9eef5;
+}
+
+.goalProgress > div > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #71c79a, #2463eb);
+}
+
+.chart {
+  height: clamp(64px, 8cqw, 102px);
+  margin-top: clamp(7px, 0.9cqw, 12px);
+  color: var(--blue);
+  display: flex;
+  align-items: stretch;
+  gap: clamp(4px, 0.5cqw, 7px);
+}
+
+.chart > div {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: center;
+  gap: 3px;
+}
+
+.chart > div > div {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #b7d4ff;
+}
+
+.chart > div:nth-child(3) > div,
+.chart > div:nth-child(4) > div {
+  background: var(--blue);
+}
+
+.chart > div > span {
+  color: #95a1b1;
+  font-size: clamp(5px, 0.65cqw, 8px);
+  margin: 0;
+}
+
+.dashboardNote {
+  display: flex;
+  align-items: center;
+  gap: clamp(5px, 0.65cqw, 8px);
+  margin-top: clamp(6px, 0.75cqw, 10px);
+  padding: clamp(4px, 0.5cqw, 6px) clamp(6px, 0.75cqw, 9px);
+  border-radius: 5px;
+  background: #f2f6fc;
+  color: #67758b;
+  font-size: clamp(6px, 0.75cqw, 9px);
+}
+
+.dashboardNote svg:last-child {
+  margin-left: auto;
+}
+
+.brandMark svg,
+.goalIcon svg,
+.secondary svg,
+.proof svg,
+.quote svg,
+.dashHead svg,
+.dashBottom p svg {
+  flex: none;
+  vertical-align: middle;
+}
+
+.dashHead b,
+.dashHead span,
+.dashBottom p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.closing {
+  margin: clamp(28px, 3.2cqw, 42px) clamp(15px, 3vw, 48px) clamp(24px, 2.5cqw, 32px);
+  padding: clamp(16px, 2cqw, 26px) clamp(18px, 2.4cqw, 32px);
+  border-radius: clamp(12px, 1.5cqw, 18px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background:
+    linear-gradient(0deg, #dceafa9c, #f2f7ffb8),
+    linear-gradient(150deg, transparent 42%, #b7c9d9 43% 55%, transparent 56%),
+    linear-gradient(25deg, #c7d9e9 19%, transparent 20%), linear-gradient(160deg, #eff6ff, #d9e8f7);
+}
+
+.closing > :first-child {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.closing > button,
+.closing > .secondary {
+  flex: 0 0 auto;
+}
+
+.closing .secondary {
+  display: inline-flex;
+  min-height: clamp(32px, 3.4cqw, 42px);
+  white-space: nowrap;
+}
+
+.closing h2 {
+  margin: clamp(6px, 0.8cqw, 10px) 0;
+  font-size: clamp(18px, 2.1cqw, 26px);
+}
+
+.closing p {
+  margin: 0;
+}
+
+.footer {
+  min-height: clamp(40px, 5cqw, 60px);
+  border-top: 1px solid #edf0f5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(8px, 1cqw, 12px) clamp(15px, 3vw, 48px);
+  font-size: clamp(9px, 1cqw, 12px);
+  color: #91a0b2;
+}
+
+.footer .brand {
+  font-size: clamp(9px, 1cqw, 12px);
+}
+
+.actions button,
+.previewCopy button,
+.closing button,
+.mobileCta button {
+  padding-inline: clamp(10px, 1.25cqw, 16px) !important;
+}
+
+.nav > button {
+  padding-inline: 8px !important;
+}
+
+.footer .brandMark {
+  width: 18px;
+  height: 18px;
+}
+
+.mobileCta {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .nav {
+    height: 50px;
+    padding: 0 14px;
+    gap: 12px;
+  }
+
+  .navLinks,
+  .signIn,
+  .nav > button {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+    font-size: 20px;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    padding: 22px 14px 26px;
+    gap: 18px;
+  }
+
+  .heroCopy,
+  .hero h1 {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .hero::before {
+    background: #fff;
+  }
+
+  .hero h1 {
+    font-size: 24px;
+    letter-spacing: -0.7px;
+    margin: 9px auto;
+  }
+
+  .heroCopy > p {
+    font-size: 12px;
+    margin: 0 auto;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    margin-top: 16px;
+  }
+
+  .actions button,
+  .secondary {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .proof {
+    justify-content: space-around;
+    margin-top: 18px;
+    font-size: 9px;
+  }
+
+  .heroPhoto {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 184px;
+    flex: none;
+    border-radius: 12px;
+    overflow: hidden;
+    background-image:
+      linear-gradient(180deg, transparent 48%, #10182750),
+      url('https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=900&q=85');
+    background-size: cover;
+    background-position: center 52%;
+    box-shadow: 0 8px 16px #12213a20;
+  }
+
+  .features {
+    position: relative;
+    isolation: isolate;
+    padding: 18px 14px;
+  }
+
+  .features::before {
+    position: absolute;
+    z-index: -1;
+    inset-block: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: #f8fafc;
+    content: '';
+  }
+
+  .goalGrid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .goalCard {
+    min-height: 0;
+    padding: 12px !important;
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    column-gap: 10px;
+    align-items: center;
+  }
+
+  .goalIcon {
+    width: 30px;
+    height: 30px;
+    grid-row: span 2;
+  }
+
+  .goalCard h3 {
+    margin: 0 0 4px;
+  }
+
+  .goalCard p {
+    grid-column: 2;
+  }
+
+  .how {
+    padding: 30px 14px;
+  }
+
+  .how h2 {
+    font-size: 18px;
+    margin: 8px 0 17px;
+  }
+
+  .desktopBreak {
+    display: none;
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+  }
+
+  .step {
+    padding: 12px;
+  }
+
+  .step::after {
+    display: none;
+  }
+
+  .step h3 {
+    margin: 0 0 4px;
+  }
+
+  .preview {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 14px;
+    background: #f8fafc;
+    gap: 14px;
+  }
+
+  .previewCopy {
+    text-align: center;
+  }
+
+  .previewCopy h2 {
+    font-size: 18px;
+    margin: 8px 0;
+  }
+
+  .previewCopy > p,
+  .previewCopy button {
+    display: none;
+  }
+
+  .dashboard {
+    width: 100%;
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
+  .dashboardSidebar {
+    min-height: 250px;
+    padding: 10px 5px;
+  }
+
+  .dashboardMain {
+    padding: 8px;
+  }
+
+  .metrics {
+    gap: 4px;
+  }
+
+  .dashboardDate {
+    display: none;
+  }
+
+  .dashBottom {
+    display: block;
+  }
+
+  .dashBottom > div:first-child {
+    display: none;
+  }
+
+  .chart {
+    height: 40px;
+    margin: 3px 0;
+  }
+
+  .closing,
+  .footer {
+    display: none;
+  }
+
+  .mobileCta {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 10px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    border-top: 1px solid #eef1f6;
+    z-index: 2;
+  }
+
+  .mobileCta button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .mobileCta small {
+    font-size: 9px;
+    color: #91a0b2;
+  }
+}
