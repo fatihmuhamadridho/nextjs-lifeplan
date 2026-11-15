@@ -2,21 +2,29 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Anchor, Badge, Box, Button, Group, Paper, Progress, Table, Text, Title } from '@mantine/core';
-import { plans } from '@features/Plan/views/data/plans';
+import { Anchor, Badge, Box, Button, Group, Menu, Paper, Progress, Table, Text, Title } from '@mantine/core';
+import type { PlanItem } from '@features/Plan/views/data/plans';
+import { usePlans } from '@features/Plan/views/data/planStore';
+import { PlanDialog } from '@features/Plan/views/components/PlanDialog';
+import { CmsDialog } from '@components/CmsDialog';
 import { useTasks } from '@features/Task/views/data/taskStore';
 import { TaskProgress, TaskStatusBadge } from '@features/Task/views/components/TaskProgress';
+import { TaskActions } from '@features/Task/views/components/TaskActions';
 import { IconBuildingBank, IconCalendarEvent, IconDotsVertical } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import { GoalDialog } from '../components/GoalDialog';
-import { goalMilestones } from '../data/goals';
+import { useGoalMilestones, type GoalMilestone } from '../data/goalMilestoneStore';
 import styles from './GoalDetail.module.css';
 import { GoalOverview } from '../components/GoalOverview';
 
 export function GoalDetailTemplate() {
   const [tab, setTab] = useState('Overview');
   const [dialog, setDialog] = useState<'edit-goal' | 'add-plan' | ''>('');
-  const [tasks] = useTasks();
+  const [milestones, setMilestones] = useGoalMilestones();
+  const [editingMilestone, setEditingMilestone] = useState<GoalMilestone | null>(null);
+  const [deletingMilestone, setDeletingMilestone] = useState<GoalMilestone | null>(null);
+  const [plans, setPlanItems] = usePlans();
+  const [tasks, setTasks] = useTasks();
   const relatedPlans = plans.filter((plan) => plan.goal === 'Build Passive Income');
   const relatedTasks = tasks.filter((task) => relatedPlans.some((plan) => plan.name === task.plan));
 
@@ -85,7 +93,12 @@ export function GoalDetailTemplate() {
       )}
 
       {tab === 'Overview' ? (
-        <GoalOverview onViewPlans={() => setTab('Plans')} />
+        <GoalOverview
+          milestones={milestones}
+          onViewPlans={() => setTab('Plans')}
+          onEditPlan={setEditingMilestone}
+          onDeletePlan={setDeletingMilestone}
+        />
       ) : tab === 'Plans' ? (
         <>
           <Group justify="space-between" mt="lg">
@@ -93,7 +106,7 @@ export function GoalDetailTemplate() {
             <Button onClick={() => setDialog('add-plan')}>Add Plan</Button>
           </Group>
           <Box className={styles.milestones}>
-            {goalMilestones.map((milestone, index) => (
+            {milestones.map((milestone, index) => (
               <Paper className={styles.milestone} key={milestone.title}>
                 <Box className={styles.index}>{index}</Box>
                 <Box className={styles.milestoneInfo}>
@@ -111,9 +124,23 @@ export function GoalDetailTemplate() {
                 </Box>
                 <Text>{milestone.progress}%</Text>
                 <Progress value={milestone.progress} color="teal" />
-                <Button variant="subtle" aria-label={`More options for ${milestone.title}`}>
-                  <IconDotsVertical size={16} />
-                </Button>
+                <Menu position="bottom-end" shadow="md" withinPortal>
+                  <Menu.Target>
+                    <Button
+                      className={styles.milestoneActions}
+                      variant="subtle"
+                      aria-label={`More options for ${milestone.title}`}
+                    >
+                      <IconDotsVertical size={16} />
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown onClick={(event) => event.stopPropagation()}>
+                    <Menu.Item onClick={() => setEditingMilestone(milestone)}>Edit Plan</Menu.Item>
+                    <Menu.Item color="red" onClick={() => setDeletingMilestone(milestone)}>
+                      Delete Plan
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </Paper>
             ))}
           </Box>
@@ -130,21 +157,20 @@ export function GoalDetailTemplate() {
             <Badge variant="light">{relatedTasks.length} tasks</Badge>
           </Group>
           {relatedTasks.length ? (
-            <Table.ScrollContainer type="native" minWidth={700}>
+            <Table.ScrollContainer type="native" minWidth={760}>
               <Table verticalSpacing="md" highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
-                    {['Progress', 'Task', 'Plan', 'Due date', 'Priority', 'Status'].map((label) => (
-                      <Table.Th key={label}>{label}</Table.Th>
+                    {['Task', 'Plan', 'Due Date', 'Priority', 'Progress', 'Status', 'Actions'].map((label) => (
+                      <Table.Th key={label} className={label === 'Actions' ? styles.taskActions : undefined}>
+                        {label}
+                      </Table.Th>
                     ))}
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
                   {relatedTasks.map((task) => (
                     <Table.Tr key={task.id}>
-                      <Table.Td>
-                        <TaskProgress task={task} />
-                      </Table.Td>
                       <Table.Td>
                         <Text size="sm" fw={600}>
                           {task.title}
@@ -167,7 +193,13 @@ export function GoalDetailTemplate() {
                         </Badge>
                       </Table.Td>
                       <Table.Td>
+                        <TaskProgress task={task} />
+                      </Table.Td>
+                      <Table.Td>
                         <TaskStatusBadge task={task} />
+                      </Table.Td>
+                      <Table.Td className={styles.taskActions}>
+                        <TaskActions task={task} />
                       </Table.Td>
                     </Table.Tr>
                   ))}
@@ -182,7 +214,79 @@ export function GoalDetailTemplate() {
         </Paper>
       )}
 
-      {dialog && <GoalDialog mode={dialog} onClose={() => setDialog('')} />}
+      {dialog && (
+        <GoalDialog
+          mode={dialog}
+          onClose={() => setDialog('')}
+          onSavePlan={(created) => {
+            setPlanItems((items) => [...items, created]);
+            setMilestones((items) => [
+              ...items,
+              {
+                title: created.name,
+                timeline: created.timeline,
+                progress: created.progress,
+              },
+            ]);
+          }}
+        />
+      )}
+      {editingMilestone && (
+        <PlanDialog
+          mode="edit-plan"
+          plan={
+            plans.find((plan) => plan.name === editingMilestone.title) ??
+            ({
+              name: editingMilestone.title,
+              goal: 'Build Passive Income',
+              timeline:
+                editingMilestone.startDate && editingMilestone.endDate
+                  ? `${editingMilestone.startDate} – ${editingMilestone.endDate}`
+                  : editingMilestone.timeline,
+              progress: editingMilestone.progress,
+              weeks: 0,
+              tasks: 0,
+              focus: '',
+              status: 'In Progress',
+            } satisfies PlanItem)
+          }
+          onClose={() => setEditingMilestone(null)}
+          onSave={(updated) => {
+            const [startDate, endDate] = updated.timeline.split('–').map((date) => date.trim());
+            setMilestones((items) =>
+              items.map((item) =>
+                item.title === editingMilestone.title
+                  ? { ...item, title: updated.name, timeline: updated.timeline, startDate, endDate }
+                  : item
+              )
+            );
+            setPlanItems((items) =>
+              items.map((item) => (item.name === editingMilestone.title ? { ...item, ...updated } : item))
+            );
+            setTasks((items) =>
+              items.map((task) => (task.plan === editingMilestone.title ? { ...task, plan: updated.name } : task))
+            );
+          }}
+        />
+      )}
+      {deletingMilestone && (
+        <CmsDialog
+          title="Delete Plan"
+          description={`Delete ${deletingMilestone.title}?`}
+          actionLabel="Delete Plan"
+          onClose={() => setDeletingMilestone(null)}
+          onSubmit={() => {
+            setMilestones((items) => items.filter((item) => item.title !== deletingMilestone.title));
+            setPlanItems((items) => items.filter((item) => item.name !== deletingMilestone.title));
+            setTasks((items) =>
+              items.map((task) => (task.plan === deletingMilestone.title ? { ...task, plan: '' } : task))
+            );
+            setDeletingMilestone(null);
+          }}
+        >
+          <Text size="sm">This plan will be removed, and its tasks will remain without a plan assignment.</Text>
+        </CmsDialog>
+      )}
     </CmsPageLayout>
   );
 }

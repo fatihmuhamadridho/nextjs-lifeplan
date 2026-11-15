@@ -96,19 +96,111 @@
   }
   .toolbar {
     width: 100%;
+    align-items: stretch;
   }
   .search {
-    width: 100%;
+    flex: 1;
+    width: auto;
     min-width: 0;
+  }
+  .toolbar button {
+    flex-shrink: 0;
   }
   .filters > div {
     width: 100%;
     flex-wrap: wrap;
   }
+  .filters > div:first-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .filters > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .goalFilter,
   .sortFilter {
     flex: 1;
     min-width: 130px;
+    width: 100%;
+  }
+  .tableWrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+  .tableScroll {
+    overflow: visible;
+  }
+  .table {
+    display: block;
+    min-width: 0;
+    overflow: visible;
+    background: transparent;
+  }
+  .table thead {
+    display: none;
+  }
+  .table tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .table tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    padding: 14px;
+    border: 1px solid #e5eaf1;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .table tbody tr:hover {
+    background: #fff;
+  }
+  .table td {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .table td::before {
+    color: #8b9bb0;
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .table td:first-child {
+    grid-column: 1 / -1;
+    padding-right: 36px;
+    font-size: 14px;
+  }
+  .table td:first-child::before {
+    content: none;
+  }
+  .table td:nth-child(4) {
+    min-width: 0;
+  }
+  .table td:nth-child(4) .mantine-Progress-root {
+    margin-top: 2px;
+  }
+  .table .rowActions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: block;
+  }
+  .table .rowActions::before {
+    content: none;
+  }
+  .paginationFooter {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

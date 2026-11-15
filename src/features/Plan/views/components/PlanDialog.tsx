@@ -3,15 +3,33 @@
 import { useState } from 'react';
 import { CmsDialog } from '@components/CmsDialog';
 import { DatePickerInput } from '@mantine/dates';
-import { TextInput, Textarea } from '@mantine/core';
+import { Select, TextInput, Textarea } from '@mantine/core';
+import type { PlanItem, PlanStatus } from '../data/plans';
 
-export function PlanDialog({ mode, onClose }: { mode: 'add-plan' | 'edit-plan' | 'add-week'; onClose: () => void }) {
+const planStatuses: PlanStatus[] = ['In Progress', 'Completed', 'On Hold', 'Not Started'];
+
+type PlanDialogProps = {
+  mode: 'add-plan' | 'edit-plan' | 'add-week';
+  onClose: () => void;
+  plan?: PlanItem;
+  onSave?: (plan: PlanItem) => void;
+};
+
+export function PlanDialog({ mode, onClose, plan, onSave }: PlanDialogProps) {
   const [week, setWeek] = useState(43);
   const isWeek = mode === 'add-week';
   const isEdit = mode === 'edit-plan';
-  const [startDate, setStartDate] = useState<string | null>(isEdit ? '2026-01-01' : null);
-  const [endDate, setEndDate] = useState<string | null>(isEdit ? '2027-12-31' : null);
+  const [startDate, setStartDate] = useState<string | null>(() => {
+    const date = plan?.timeline.split('–')[0]?.trim();
+    return date && Number.isFinite(Date.parse(`${date} 1`)) ? new Date(`${date} 1`).toISOString().slice(0, 10) : null;
+  });
+  const [endDate, setEndDate] = useState<string | null>(() => {
+    const date = plan?.timeline.split('–')[1]?.trim();
+    return date && Number.isFinite(Date.parse(`${date} 1`)) ? new Date(`${date} 1`).toISOString().slice(0, 10) : null;
+  });
   const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState(plan?.name ?? '');
+  const [status, setStatus] = useState<PlanStatus>(plan?.status ?? 'Not Started');
   const datesValid = Boolean(startDate && endDate && endDate >= startDate);
 
   return (
@@ -26,7 +44,26 @@ export function PlanDialog({ mode, onClose }: { mode: 'add-plan' | 'edit-plan' |
       onClose={onClose}
       onSubmit={() => {
         setSubmitted(true);
-        if (isWeek || datesValid) onClose();
+        if (isWeek) {
+          onClose();
+          return;
+        }
+        if (datesValid && name.trim()) {
+          onSave?.({
+            ...(plan ?? {
+              goal: 'Build Passive Income',
+              progress: 0,
+              weeks: 0,
+              tasks: 0,
+              focus: '',
+              status: 'Not Started',
+            }),
+            name: name.trim(),
+            timeline: `${new Date(startDate!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} – ${new Date(endDate!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`,
+            status,
+          });
+          onClose();
+        }
       }}
     >
       {isWeek ? (
@@ -63,8 +100,10 @@ export function PlanDialog({ mode, onClose }: { mode: 'add-plan' | 'edit-plan' |
           <TextInput
             label="Plan Title"
             required
-            defaultValue={isEdit ? 'Build E-Commerce Business' : undefined}
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value)}
             placeholder="e.g. Build E-Commerce Business"
+            error={submitted && !name.trim() ? 'Enter a plan title' : undefined}
           />
           <Textarea
             label={
@@ -93,6 +132,15 @@ export function PlanDialog({ mode, onClose }: { mode: 'add-plan' | 'edit-plan' |
             minDate={startDate ?? undefined}
             valueFormat="D MMM YYYY"
             error={submitted && !datesValid ? 'Select an end date on or after the start date' : undefined}
+          />
+          <Select
+            label="Status"
+            data={planStatuses}
+            value={status}
+            onChange={(value) => {
+              if (value) setStatus(value as PlanStatus);
+            }}
+            allowDeselect={false}
           />
         </>
       )}

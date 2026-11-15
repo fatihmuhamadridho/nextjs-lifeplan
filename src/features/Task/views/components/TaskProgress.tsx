@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Badge, Button, Group, NumberInput, Progress, Stack, Text } from '@mantine/core';
 import { CmsDialog } from '@components/CmsDialog';
 import { taskProgress, taskStatus, taskStatusColors, updateTaskProgress, type Task } from '../data/tasks';
-import { TaskActions } from './TaskActions';
 import { useTasks } from '../data/taskStore';
 
 export function TaskStatusBadge({ task }: { task: Task }) {
@@ -26,7 +25,7 @@ export function TaskProgress({ task }: { task: Task }) {
   return (
     <>
       <Stack gap={4} miw={130}>
-        <Group gap={4} justify="space-between" wrap="nowrap">
+        <Group gap={4} justify="flex-start" wrap="nowrap">
           <Button
             variant="subtle"
             size="compact-xs"
@@ -39,7 +38,6 @@ export function TaskProgress({ task }: { task: Task }) {
           >
             {task.current}/{task.target} ({Math.round(percent)}%)
           </Button>
-          <TaskActions task={task} />
         </Group>
         <Progress value={Math.min(100, percent)} size="xs" color={taskStatusColors[taskStatus(task)]} />
         <Text size="10px" c="dimmed">

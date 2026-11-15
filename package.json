@@ -11,6 +11,7 @@
     "prettier": "prettier . --write"
   },
   "dependencies": {
+    "@mantine/charts": "^9.8.0",
     "@mantine/core": "^9.8.0",
     "@mantine/dates": "^9.8.0",
     "@mantine/hooks": "^9.8.0",
@@ -22,7 +23,8 @@
     "next": "16.3.8",
     "prettier": "^3.9.9",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

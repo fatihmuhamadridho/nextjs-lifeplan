@@ -37,22 +37,6 @@ export function ProfileTemplate() {
             Email
             <input type="email" defaultValue="fatih@example.com" />
           </label>
-          <label>
-            Timezone
-            <select defaultValue="Asia/Jakarta (GMT+7)">
-              <option>Asia/Jakarta (GMT+7)</option>
-              <option>UTC</option>
-              <option>America/New_York</option>
-            </select>
-          </label>
-          <label>
-            Language
-            <select defaultValue="English (US)">
-              <option>English (US)</option>
-              <option>Bahasa Indonesia</option>
-              <option>English (UK)</option>
-            </select>
-          </label>
           <label className={styles.fullWidth}>
             Life Motto / Vision Summary
             <input defaultValue="Living intentionally, maintaining freedom, and building sustainable wealth for family." />

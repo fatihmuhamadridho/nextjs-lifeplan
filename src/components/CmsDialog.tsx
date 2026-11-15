@@ -12,13 +12,22 @@ type CmsDialogProps = {
   children: ReactNode;
   onClose: () => void;
   onSubmit: () => void;
+  dialogClassName?: string;
 };
 
-export function CmsDialog({ title, description, actionLabel, children, onClose, onSubmit }: CmsDialogProps) {
+export function CmsDialog({
+  title,
+  description,
+  actionLabel,
+  children,
+  onClose,
+  onSubmit,
+  dialogClassName,
+}: CmsDialogProps) {
   return (
     <Box className={styles.overlay} onClick={onClose}>
       <Paper
-        className={styles.dialog}
+        className={dialogClassName ? `${styles.dialog} ${dialogClassName}` : styles.dialog}
         component="form"
         role="dialog"
         aria-modal="true"

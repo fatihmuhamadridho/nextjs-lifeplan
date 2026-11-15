@@ -3,14 +3,16 @@
 import { PlanDialog } from '@features/Plan/views/components/PlanDialog';
 import { CmsDialog } from '@components/CmsDialog';
 import { MonthPickerInput } from '@mantine/dates';
+import type { PlanItem } from '@features/Plan/views/data/plans';
 
 type GoalDialogProps = {
   mode: 'add-goal' | 'edit-goal' | 'add-plan';
   onClose: () => void;
+  onSavePlan?: (plan: PlanItem) => void;
 };
 
-export function GoalDialog({ mode, onClose }: GoalDialogProps) {
-  if (mode === 'add-plan') return <PlanDialog mode="add-plan" onClose={onClose} />;
+export function GoalDialog({ mode, onClose, onSavePlan }: GoalDialogProps) {
+  if (mode === 'add-plan') return <PlanDialog mode="add-plan" onClose={onClose} onSave={onSavePlan} />;
   const isEdit = mode === 'edit-goal';
 
   return (
@@ -24,7 +26,7 @@ export function GoalDialog({ mode, onClose }: GoalDialogProps) {
       onSubmit={onClose}
     >
       <label>
-        Goal Title *
+        <span>Goal Title *</span>
         <input
           required
           defaultValue={isEdit ? 'Build Passive Income' : undefined}
@@ -32,7 +34,9 @@ export function GoalDialog({ mode, onClose }: GoalDialogProps) {
         />
       </label>
       <label>
-        Description <span>(optional)</span>
+        <span>
+          Description <span>(optional)</span>
+        </span>
         <textarea placeholder="Briefly describe what achieving this looks like..." />
       </label>
       <MonthPickerInput label="Target Horizon" defaultValue="2030-12-01" valueFormat="MMM YYYY" />

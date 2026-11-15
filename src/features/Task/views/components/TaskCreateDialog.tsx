@@ -35,6 +35,7 @@ export function TaskCreateDialog({
       title={task ? 'Edit Task' : 'Add Task'}
       description={week ? `Create a task for ${week}.` : 'Create an action to move your plan forward.'}
       actionLabel={task ? 'Save Changes' : 'Create Task'}
+      dialogClassName={styles.taskDialog}
       onClose={onClose}
       onSubmit={() => {
         if (!title.trim() || Number(target) <= 0 || Number(threshold) < 1 || Number(threshold) > 100) return;
@@ -45,7 +46,7 @@ export function TaskCreateDialog({
                 ? updateTaskProgress(item, {
                     title: title.trim(),
                     plan,
-                    week: plan === 'Build E-Commerce Business' ? (assignedWeek ?? undefined) : undefined,
+                    week: assignedWeek ?? undefined,
                     due,
                     priority: priority || 'Medium',
                     current: Number(current),
@@ -64,7 +65,7 @@ export function TaskCreateDialog({
             id: Date.now(),
             title: title.trim(),
             plan: plan.trim(),
-            week: plan === 'Build E-Commerce Business' ? (assignedWeek ?? undefined) : undefined,
+            week: assignedWeek ?? undefined,
             due,
             priority: priority || 'Medium',
             current: 0,
@@ -97,17 +98,15 @@ export function TaskCreateDialog({
           clearable
           placeholder="Select a plan"
         />
-        {plan === 'Build E-Commerce Business' && (
-          <Select
-            label="Weekly plan"
-            data={weeks.map((item) => item.week)}
-            value={assignedWeek}
-            onChange={setAssignedWeek}
-            placeholder="No week assigned"
-            clearable
-            disabled={Boolean(week)}
-          />
-        )}
+        <Select
+          label="Weekly plan"
+          data={weeks.map((item) => item.week)}
+          value={assignedWeek}
+          onChange={setAssignedWeek}
+          placeholder="No week assigned"
+          clearable
+          disabled={Boolean(week)}
+        />
         <TextInput
           label="Linked goal"
           value={plans.find((item) => item.name === plan)?.goal || ''}

@@ -43,3 +43,5 @@ pnpm-lock.yaml
 
 !.env.example
 __references__
+.playwright-cli
+output

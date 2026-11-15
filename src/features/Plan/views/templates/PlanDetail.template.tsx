@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Box, Button, Group, Menu, Paper, Progress, Text, Title } from '@mantine/core';
 import { TaskCreateDialog } from '@features/Task/views/components/TaskCreateDialog';
 import { IconBriefcase, IconCalendarEvent, IconChevronRight, IconDotsVertical } from '@tabler/icons-react';
@@ -13,9 +14,15 @@ import styles from './PlanDetail.module.css';
 import { useTasks } from '@features/Task/views/data/taskStore';
 import { taskStatus } from '@features/Task/views/data/tasks';
 import { TaskProgress, TaskStatusBadge } from '@features/Task/views/components/TaskProgress';
+import { TaskActions } from '@features/Task/views/components/TaskActions';
 import { PlanOverview } from '../components/PlanOverview';
+import { usePlans } from '../data/planStore';
 
 export function PlanDetailTemplate() {
+  const router = useRouter();
+  const [plans, setPlans] = usePlans();
+  const activePlan = plans.find((plan) => plan.name === 'Build E-Commerce Business');
+  const [deletePlanOpen, setDeletePlanOpen] = useState(false);
   const [weeks, setWeeks] = useWeeks();
   const sortedWeeks = [...weeks].sort((a, b) => Number(b.week.slice(5)) - Number(a.week.slice(5)));
   const [weekAction, setWeekAction] = useState<{ type: 'edit' | 'delete'; week: WeekPlan } | null>(null);
@@ -40,6 +47,9 @@ export function PlanDetailTemplate() {
             </Box>
             <Box className={styles.taskStatus}>
               <TaskStatusBadge task={task} />
+            </Box>
+            <Box className={styles.taskActions}>
+              <TaskActions task={task} />
             </Box>
           </Box>
         ))}
@@ -66,15 +76,6 @@ export function PlanDetailTemplate() {
           </Button>
         </Menu.Target>
         <Menu.Dropdown>
-          <Menu.Item onClick={() => setTaskWeek(item.week)}>Add Task</Menu.Item>
-          <Menu.Item
-            onClick={() => {
-              setTab('Weekly Plans');
-              setExpandedWeek(sortedWeeks.findIndex((entry) => entry.id === item.id));
-            }}
-          >
-            View Tasks
-          </Menu.Item>
           <Menu.Item onClick={() => setWeekAction({ type: 'edit', week: item })}>Edit Week</Menu.Item>
           <Menu.Item color="red" onClick={() => setWeekAction({ type: 'delete', week: item })}>
             Delete Week
@@ -112,9 +113,19 @@ export function PlanDetailTemplate() {
               </Text>
             </Box>
           </Group>
-          <Button variant="default" onClick={() => setEditOpen(true)}>
-            Edit Plan
-          </Button>
+          <Menu position="bottom-end" shadow="md" withinPortal>
+            <Menu.Target>
+              <Button variant="default" aria-label="Plan actions">
+                <IconDotsVertical size={16} />
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item onClick={() => setEditOpen(true)}>Edit Plan</Menu.Item>
+              <Menu.Item color="red" onClick={() => setDeletePlanOpen(true)}>
+                Delete Plan
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
         <Group className={styles.progressRow} wrap="nowrap">
           <Progress value={62} color="teal" />
@@ -257,7 +268,35 @@ export function PlanDetailTemplate() {
         </Paper>
       )}
 
-      {editOpen && <PlanDialog mode="edit-plan" onClose={() => setEditOpen(false)} />}
+      {editOpen && activePlan && (
+        <PlanDialog
+          mode="edit-plan"
+          plan={activePlan}
+          onClose={() => setEditOpen(false)}
+          onSave={(updated) => {
+            setPlans((items) => items.map((item) => (item.name === activePlan.name ? updated : item)));
+            setTasks((items) =>
+              items.map((task) => (task.plan === activePlan.name ? { ...task, plan: updated.name } : task))
+            );
+          }}
+        />
+      )}
+      {deletePlanOpen && activePlan && (
+        <CmsDialog
+          title="Delete Plan"
+          description={`Delete ${activePlan.name}?`}
+          actionLabel="Delete Plan"
+          onClose={() => setDeletePlanOpen(false)}
+          onSubmit={() => {
+            setPlans((items) => items.filter((item) => item.name !== activePlan.name));
+            setTasks((items) => items.map((task) => (task.plan === activePlan.name ? { ...task, plan: '' } : task)));
+            setDeletePlanOpen(false);
+            router.push('/plans');
+          }}
+        >
+          <Text size="sm">This plan will be removed, and its tasks will remain without a plan assignment.</Text>
+        </CmsDialog>
+      )}
       {taskWeek && (
         <TaskCreateDialog
           linkedPlan="Build E-Commerce Business"

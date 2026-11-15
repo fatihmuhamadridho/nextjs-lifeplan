@@ -86,8 +86,18 @@
   color: #2864e8;
 }
 
+.metrics {
+  display: flex;
+  width: 38%;
+  min-width: 220px;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
 .progress {
-  width: 18%;
+  min-width: 0;
+  flex: 1;
 }
 
 .menu {
@@ -102,21 +112,34 @@
 
 @media (max-width: 760px) {
   .goalRow {
-    flex-wrap: wrap;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 0;
+    padding: 14px;
   }
-
   .goalInfo {
-    min-width: calc(100% - 60px);
+    min-width: 0;
+    grid-column: 2;
+    grid-row: 1;
   }
-
+  .goalRow > button {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .metrics {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+  }
   .progress {
-    width: 55%;
-    margin-left: 56px;
+    width: auto;
   }
-}
-
-@media (max-width: 760px) {
+  .metrics :global(.mantine-Badge-root) {
+    flex: none;
+  }
   .heading {
     align-items: flex-start;
     gap: 16px;
@@ -124,40 +147,25 @@
   .heading h1 {
     font-size: 25px;
   }
-  .goalInfo {
-    min-width: 0;
-    flex-basis: calc(100% - 70px);
-  }
-  .progress {
-    margin-left: 0;
-    width: 50%;
-  }
 }
 
 @media (min-width: 761px) and (max-width: 1050px) {
   .goalRow {
     display: grid;
-    grid-template-columns: 46px minmax(0, 1fr) 60px 95px 36px;
+    grid-template-columns: 46px minmax(0, 1fr) minmax(220px, 38%) 36px;
     gap: 12px;
   }
   .goalInfo {
     min-width: 0;
   }
-  .progress {
-    grid-column: 2 / 4;
-    grid-row: 2;
-    width: 100%;
-  }
-  .goalRow > b {
+  .metrics {
     grid-column: 3;
     grid-row: 1;
-  }
-  .goalRow > :nth-child(5) {
-    grid-column: 4;
-    grid-row: 1;
+    width: 100%;
+    min-width: 0;
   }
   .goalRow > button {
-    grid-column: 5;
+    grid-column: 4;
     grid-row: 1;
   }
 }

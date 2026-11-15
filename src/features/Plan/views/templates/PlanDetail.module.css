@@ -138,7 +138,7 @@
 }
 .taskRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px 110px;
+  grid-template-columns: minmax(0, 1fr) 180px 110px 32px;
   align-items: center;
   gap: 24px;
   padding: 14px 16px;
@@ -157,6 +157,9 @@
 }
 .taskStatus {
   justify-self: end;
+}
+.taskActions {
+  justify-self: center;
 }
 .taskRow :global(.mantine-Badge-root) {
   font-size: 10px;
@@ -205,7 +208,7 @@
     padding: 18px;
   }
   .taskRow {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto 32px;
     gap: 12px;
     padding: 14px;
   }
@@ -215,6 +218,9 @@
   .taskProgress {
     width: 100%;
     max-width: 220px;
+  }
+  .taskActions {
+    justify-self: center;
   }
 }
 
@@ -229,7 +235,7 @@
     grid-template-columns: 24px minmax(0, 1fr) 44px minmax(110px, 0.6fr) 32px;
   }
   .taskRow {
-    grid-template-columns: minmax(0, 1fr) 150px 90px;
+    grid-template-columns: minmax(0, 1fr) 150px 90px 32px;
     gap: 14px;
   }
 }

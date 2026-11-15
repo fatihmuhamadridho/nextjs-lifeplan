@@ -36,8 +36,7 @@
   font-size: 13px;
   font-weight: 600;
 }
-.formGrid input,
-.formGrid select {
+.formGrid input {
   width: 100%;
   min-height: 42px;
   padding: 9px 11px;
@@ -70,8 +69,7 @@
   .formGrid {
     min-width: 0;
   }
-  .formGrid input,
-  .formGrid select {
+  .formGrid input {
     min-width: 0;
     font-size: 16px;
   }

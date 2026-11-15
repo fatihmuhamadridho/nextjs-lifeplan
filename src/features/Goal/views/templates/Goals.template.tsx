@@ -6,6 +6,7 @@ import { Badge, Box, Button, Group, Paper, Progress, Text, Title } from '@mantin
 import { IconArchive, IconDotsVertical, IconPlus, IconTarget } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import { GoalCategoryIcon } from '@components/GoalCategoryIcon';
+import { CmsDialog } from '@components/CmsDialog';
 import { goals } from '../data/goals';
 import { GoalDialog } from '../components/GoalDialog';
 import styles from './Goals.module.css';
@@ -15,9 +16,12 @@ export function GoalsTemplate() {
   const [openMenu, setOpenMenu] = useState(-1);
   const [showArchived, setShowArchived] = useState(false);
   const [archivedGoals, setArchivedGoals] = useState<string[]>([]);
-  const [pausedGoals, setPausedGoals] = useState<string[]>([]);
-  const visibleGoals = goals.filter((goal) =>
-    showArchived ? archivedGoals.includes(goal.title) : !archivedGoals.includes(goal.title)
+  const [deletedGoal, setDeletedGoal] = useState<string | null>(null);
+  const [deletedGoals, setDeletedGoals] = useState<string[]>([]);
+  const visibleGoals = goals.filter(
+    (goal) =>
+      !deletedGoals.includes(goal.title) &&
+      (showArchived ? archivedGoals.includes(goal.title) : !archivedGoals.includes(goal.title))
   );
 
   return (
@@ -76,18 +80,16 @@ export function GoalsTemplate() {
                 </Link>
                 <Text c="dimmed">{goal.description}</Text>
               </Box>
-              <Box className={styles.progress}>
-                <Progress
-                  value={goal.progress}
-                  color={
-                    pausedGoals.includes(goal.title)
-                      ? 'gray'
-                      : ['teal', 'teal', 'orange', 'blue', 'red', 'teal', 'orange'][index]
-                  }
-                />
+              <Box className={styles.metrics}>
+                <Box className={styles.progress}>
+                  <Progress
+                    value={goal.progress}
+                    color={['teal', 'teal', 'orange', 'blue', 'red', 'teal', 'orange'][index]}
+                  />
+                </Box>
+                <b>{goal.progress}%</b>
+                <Badge variant="light">Dec 2030</Badge>
               </Box>
-              <b>{goal.progress}%</b>
-              <Badge variant="light">Dec 2030</Badge>
               <Button
                 variant="subtle"
                 aria-label={`Actions for ${goal.title}`}
@@ -106,27 +108,28 @@ export function GoalsTemplate() {
                   >
                     Edit Goal
                   </Button>
-                  <Button
-                    variant="subtle"
-                    onClick={() =>
-                      setPausedGoals(
-                        pausedGoals.includes(goal.title)
-                          ? pausedGoals.filter((title) => title !== goal.title)
-                          : [...pausedGoals, goal.title]
-                      )
-                    }
-                  >
-                    {pausedGoals.includes(goal.title) ? 'Resume' : 'Pause'}
-                  </Button>
-                  <Button
-                    variant="subtle"
-                    onClick={() => {
-                      setArchivedGoals([...archivedGoals, goal.title]);
-                      setOpenMenu(-1);
-                    }}
-                  >
-                    Archive
-                  </Button>
+                  {showArchived ? (
+                    <Button
+                      variant="subtle"
+                      color="red"
+                      onClick={() => {
+                        setDeletedGoal(goal.title);
+                        setOpenMenu(-1);
+                      }}
+                    >
+                      Delete Goal
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="subtle"
+                      onClick={() => {
+                        setArchivedGoals([...archivedGoals, goal.title]);
+                        setOpenMenu(-1);
+                      }}
+                    >
+                      Archive
+                    </Button>
+                  )}
                 </Paper>
               )}
             </Paper>
@@ -135,6 +138,20 @@ export function GoalsTemplate() {
       </Box>
 
       {dialog && <GoalDialog mode={dialog} onClose={() => setDialog('')} />}
+      {deletedGoal && (
+        <CmsDialog
+          title="Delete Goal"
+          description={`Delete ${deletedGoal}?`}
+          actionLabel="Delete Goal"
+          onClose={() => setDeletedGoal(null)}
+          onSubmit={() => {
+            setDeletedGoals((items) => [...items, deletedGoal]);
+            setDeletedGoal(null);
+          }}
+        >
+          <Text size="sm">This goal will be permanently removed from your goals.</Text>
+        </CmsDialog>
+      )}
     </CmsPageLayout>
   );
 }

@@ -25,6 +25,7 @@ import styles from './Tasks.module.css';
 import { taskStatus, taskStatuses } from '../data/tasks';
 import { useTasks } from '../data/taskStore';
 import { TaskProgress, TaskStatusBadge } from '../components/TaskProgress';
+import { TaskActions } from '../components/TaskActions';
 
 export function TasksTemplate() {
   const [tasks] = useTasks();
@@ -66,7 +67,7 @@ export function TasksTemplate() {
         ))}
       </Box>
       <Group justify="space-between" className={styles.toolbar}>
-        <Group>
+        <Group className={styles.statusFilters}>
           {['All Tasks', ...taskStatuses].map((item) => (
             <Button
               key={item}
@@ -92,12 +93,14 @@ export function TasksTemplate() {
         />
       </Group>
       <Paper className={styles.tableContainer}>
-        <Table.ScrollContainer type="native" minWidth={850}>
+        <Table.ScrollContainer type="native" minWidth={900}>
           <Table verticalSpacing="md" horizontalSpacing="lg" highlightOnHover aria-label="Tasks">
             <Table.Thead>
               <Table.Tr>
-                {['Task', 'Plan', 'Goal', 'Due Date', 'Priority', 'Progress', 'Status'].map((column) => (
-                  <Table.Th key={column}>{column}</Table.Th>
+                {['Task', 'Plan', 'Goal', 'Due Date', 'Priority', 'Progress', 'Status', 'Actions'].map((column) => (
+                  <Table.Th key={column} className={column === 'Actions' ? styles.actions : undefined}>
+                    {column}
+                  </Table.Th>
                 ))}
               </Table.Tr>
             </Table.Thead>
@@ -154,11 +157,14 @@ export function TasksTemplate() {
                   <Table.Td>
                     <TaskStatusBadge task={task} />
                   </Table.Td>
+                  <Table.Td className={styles.actions}>
+                    <TaskActions task={task} />
+                  </Table.Td>
                 </Table.Tr>
               ))}
               {!visible.length && (
                 <Table.Tr>
-                  <Table.Td colSpan={7}>
+                  <Table.Td colSpan={8}>
                     <Box className={styles.empty}>
                       <Title order={3}>No tasks found</Title>
                       <Text c="dimmed">Add a task or try a different search or filter.</Text>
