@@ -31,10 +31,10 @@ export function ReportsTemplate() {
     .map((entry) => ({ ...entry, date: new Date(year, entry.month - 1, 1) }))
     .filter(({ date }) => date >= periodStart && date <= periodEnd);
   const hasWeeklyData = weeklyTrend.some((week) => week.successRate !== null);
-  const firstWeekWithData = weeklyTrend.findIndex((week) => week.successRate !== null);
-  const chartData = weeklyTrend.map((week, index) =>
-    index < firstWeekWithData ? { ...week, successRate: 0, successCount: 0, failedCount: 0 } : week
-  );
+  const chartData = weeklyTrend.map((week) => ({
+    ...week,
+    successRate: week.successRate ?? 0,
+  }));
   const monthGroups = weeklyTrend.reduce<{ label: string; count: number }[]>((groups, item) => {
     const label = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(year, item.month - 1, 1));
     const lastGroup = groups[groups.length - 1];
@@ -142,7 +142,7 @@ export function ReportsTemplate() {
                   tooltipProps={{
                     content: ({ active, label }) => {
                       const week = chartData.find((entry) => entry.week === label);
-                      if (!active || !week || week.successRate === null) return null;
+                      if (!active || !week) return null;
                       return (
                         <Paper withBorder shadow="md" radius="md" p="md" miw={200}>
                           <Text fw={600} mb="xs">
