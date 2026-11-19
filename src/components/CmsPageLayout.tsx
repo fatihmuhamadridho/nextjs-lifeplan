@@ -8,8 +8,7 @@ import { DashboardNavbar } from '@components/DashboardNavbar';
 import { DashboardSidebar } from '@components/DashboardSidebar';
 import { CmsBreadcrumbs, type BreadcrumbItem } from '@components/CmsBreadcrumbs';
 import { useGetProfile } from '@core/User/infrastructure/account.hook';
-import { LIFEPLAN_ACCESS_TOKEN_KEY } from '@configs/base.config';
-import { localStorageService } from '@services/localStorage.service';
+import { getAccessToken } from '@services/accessToken.service';
 import { accountController } from '@core/User/domain/account.controller';
 import styles from './CmsPageLayout.module.css';
 
@@ -29,7 +28,7 @@ export function CmsPageLayout({ active, children, goalCount = 7, breadcrumbs }: 
   const router = useRouter();
   const hasToken = useSyncExternalStore<boolean | null>(
     subscribeToToken,
-    () => Boolean(localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY)),
+    () => Boolean(getAccessToken()),
     () => null
   );
   const profileQuery = useGetProfile(hasToken === true);
@@ -37,6 +36,7 @@ export function CmsPageLayout({ active, children, goalCount = 7, breadcrumbs }: 
   useEffect(() => {
     if (hasToken === null) return;
     if (!hasToken) {
+      accountController.logout();
       router.replace('/login');
       return;
     }

@@ -11,7 +11,11 @@ export class AuthUseCase {
   constructor(private readonly repository: AccountRepository) {}
 
   private saveSession(session: AuthSession): void {
-    this.storage.set(LIFEPLAN_ACCESS_TOKEN_KEY, session.token);
+    try {
+      this.storage.set(LIFEPLAN_ACCESS_TOKEN_KEY, session.token);
+    } catch {
+      // The cookie also carries the session in standalone browsers.
+    }
     this.cookies.set(LIFEPLAN_ACCESS_TOKEN_KEY, session.token, {
       maxAge: session.expiresIn,
       sameSite: 'lax',
@@ -32,7 +36,11 @@ export class AuthUseCase {
   }
 
   logout(): void {
-    this.storage.delete(LIFEPLAN_ACCESS_TOKEN_KEY);
+    try {
+      this.storage.delete(LIFEPLAN_ACCESS_TOKEN_KEY);
+    } catch {
+      // Storage may be unavailable in standalone browsers.
+    }
     this.cookies.delete(LIFEPLAN_ACCESS_TOKEN_KEY);
   }
 }

@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { LIFEPLAN_ACCESS_TOKEN_KEY } from './common/configs/base.config';
 
 const publicPaths = ['/'];
-const guestPaths = ['/login', '/register'];
 const protectedPaths = [
   '/dashboard',
   '/vision',
@@ -23,9 +22,6 @@ export function proxy(request: NextRequest) {
 
   if (isProtected && !hasSession) {
     return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (guestPaths.includes(pathname) && hasSession) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   return NextResponse.next();
 }

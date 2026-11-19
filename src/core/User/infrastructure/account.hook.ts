@@ -1,13 +1,11 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { LIFEPLAN_ACCESS_TOKEN_KEY } from '@configs/base.config';
-import { LocalStorageService } from '@services/localStorage.service';
+import { getAccessToken } from '@services/accessToken.service';
 import { accountController } from '../domain/account.controller';
 import type { ChangePasswordInput, LoginInput, ProfileUpdateInput, RegisterInput } from '../domain/account.interface';
 
 const profileKey = ['account', 'profile'] as const;
-const storage = new LocalStorageService();
 const accountScopedQueryKeys = [['goals'], ['plans'], ['weeks'], ['tasks'], ['reports'], ['vision']] as const;
 
 function clearAccountScopedQueries(client: ReturnType<typeof useQueryClient>) {
@@ -34,7 +32,7 @@ export function useLogin() {
     },
   });
 }
-export function useGetProfile(enabled = Boolean(storage.get(LIFEPLAN_ACCESS_TOKEN_KEY))) {
+export function useGetProfile(enabled = Boolean(getAccessToken())) {
   return useQuery({ queryKey: profileKey, queryFn: () => accountController.getProfile(), enabled });
 }
 export function useUpdateProfile() {

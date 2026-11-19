@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useLogin, useRegister } from '@core/User/infrastructure/account.hook';
 import { accountController } from '@core/User/domain/account.controller';
 import { LIFEPLAN_ACCESS_TOKEN_KEY } from '@configs/base.config';
-import { localStorageService } from '@services/localStorage.service';
+import { getAccessToken } from '@services/accessToken.service';
 import { CookiesStorageService } from '@services/cookiesStorage.service';
 import styles from './AuthForm.module.css';
 
@@ -24,14 +24,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    const token = localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY);
+    const token = getAccessToken();
     if (!token) return;
     let cancelled = false;
 
     accountController
       .getProfile()
       .then(() => {
-        if (cancelled || localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY) !== token) return;
+        if (cancelled || getAccessToken() !== token) return;
         new CookiesStorageService().set(LIFEPLAN_ACCESS_TOKEN_KEY, token, {
           sameSite: 'lax',
           secure: window.location.protocol === 'https:',
@@ -39,7 +39,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         router.replace('/dashboard');
       })
       .catch((error: unknown) => {
-        if (cancelled || localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY) !== token) return;
+        if (cancelled || getAccessToken() !== token) return;
         if (axios.isAxiosError(error) && error.response?.status === 401) accountController.logout();
       });
 

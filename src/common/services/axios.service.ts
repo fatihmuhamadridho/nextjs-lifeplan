@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { BASE_API_URL } from '@configs/base.config';
-import { LIFEPLAN_ACCESS_TOKEN_KEY } from '@configs/base.config';
-import { localStorageService } from './localStorage.service';
+import { getAccessToken } from './accessToken.service';
 
 export interface AxiosServiceOptions {
   baseURL?: string;
@@ -56,7 +55,7 @@ export class AxiosService {
 /** Dedicated client for the LifePlan Express API; its token is never sent to other API hosts. */
 export const lifePlanApi = new AxiosService({
   baseURL: BASE_API_URL,
-  accessToken: () => localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY),
+  accessToken: getAccessToken,
 });
 
 export function getLifePlanApiOrigin(): string {
