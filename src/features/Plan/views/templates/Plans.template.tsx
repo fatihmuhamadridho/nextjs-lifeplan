@@ -5,21 +5,22 @@ import { useRouter } from 'next/navigation';
 import { Badge, Box, Button, Group, Menu, Pagination, Select, Progress, Text, TextInput, Title } from '@mantine/core';
 import { IconDotsVertical, IconSearch } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
-import { planGoals, type PlanItem, type PlanStatus } from '../data/plans';
-import { usePlans } from '../data/planStore';
+import type { Plan as PlanItem, PlanStatus } from '@core/Plan/domain/plan.interface';
 import { PlanDialog } from '../components/PlanDialog';
 import { CmsDialog } from '@components/CmsDialog';
-import { useTasks } from '@features/Task/views/data/taskStore';
-import { useGoalMilestones } from '@features/Goal/views/data/goalMilestoneStore';
+import { useDeletePlan, useListPlans } from '@core/Plan/infrastructure/plan.hook';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
 import styles from './Plans.module.css';
 
 const statusFilters = ['All Plans', 'In Progress', 'Completed', 'On Hold'] as const;
 
 export function PlansTemplate() {
   const router = useRouter();
-  const [plans, setPlans] = usePlans();
-  const [, setTasks] = useTasks();
-  const [, setMilestones] = useGoalMilestones();
+  const plansQuery = useListPlans();
+  const goalsQuery = useListGoals({ archived: false });
+  const deletePlan = useDeletePlan();
+  const plans = useMemo(() => plansQuery.data?.data ?? [], [plansQuery.data?.data]);
+  const goalNames = goalsQuery.data?.data.map((item) => item.title) ?? [];
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState('10');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,7 +88,7 @@ export function PlansTemplate() {
                 setPage(1);
               }}
             >
-              {filter} ({[8, 6, 2, 0][index]})
+              {filter} ({index === 0 ? plans.length : plans.filter((plan) => plan.status === filter).length})
             </Button>
           ))}
         </Group>
@@ -99,7 +100,7 @@ export function PlansTemplate() {
               setGoal(value ?? 'All Goals');
               setPage(1);
             }}
-            data={['All Goals', ...planGoals]}
+            data={['All Goals', ...goalNames]}
             aria-label="Filter by goal"
             searchable
             nothingFoundMessage="No goals found"
@@ -128,6 +129,21 @@ export function PlansTemplate() {
         </Group>
       </Group>
 
+      {plansQuery.isError && (
+        <Text c="red" mb="md">
+          Unable to load plans. Refresh and try again.
+        </Text>
+      )}
+      {deletePlan.isError && (
+        <Text c="red" mb="md">
+          Unable to delete the selected plan.
+        </Text>
+      )}
+      {plansQuery.isLoading && (
+        <Text c="dimmed" mb="md">
+          Loading plans…
+        </Text>
+      )}
       <Box className={styles.tableWrap}>
         <Box className={styles.tableScroll}>
           <table className={styles.table}>
@@ -142,7 +158,7 @@ export function PlansTemplate() {
               {paginatedPlans.map((plan) => {
                 return (
                   <tr
-                    key={plan.name}
+                    key={plan.id}
                     onClick={(event) => {
                       if (
                         event.target instanceof Element &&
@@ -150,7 +166,7 @@ export function PlansTemplate() {
                       ) {
                         return;
                       }
-                      router.push('/plans/detail');
+                      router.push(`/plans/detail?id=${encodeURIComponent(plan.id)}`);
                     }}
                   >
                     <td data-label="Plan name">{plan.name}</td>
@@ -235,46 +251,8 @@ export function PlansTemplate() {
         </Group>
       </Box>
 
-      {dialogOpen && (
-        <PlanDialog
-          mode="add-plan"
-          onClose={() => setDialogOpen(false)}
-          onSave={(created) => {
-            setPlans((items) => [...items, created]);
-            if (created.goal === 'Build Passive Income') {
-              setMilestones((items) => [
-                ...items,
-                {
-                  title: created.name,
-                  timeline: created.timeline,
-                  progress: created.progress,
-                },
-              ]);
-            }
-          }}
-        />
-      )}
-      {editingPlan && (
-        <PlanDialog
-          mode="edit-plan"
-          plan={editingPlan}
-          onClose={() => setEditingPlan(null)}
-          onSave={(updated) => {
-            setPlans((items) => items.map((item) => (item.name === editingPlan.name ? updated : item)));
-            const [startDate, endDate] = updated.timeline.split('–').map((date) => date.trim());
-            setMilestones((items) =>
-              items.map((item) =>
-                item.title === editingPlan.name
-                  ? { ...item, title: updated.name, timeline: updated.timeline, startDate, endDate }
-                  : item
-              )
-            );
-            setTasks((items) =>
-              items.map((task) => (task.plan === editingPlan.name ? { ...task, plan: updated.name } : task))
-            );
-          }}
-        />
-      )}
+      {dialogOpen && <PlanDialog mode="add-plan" onClose={() => setDialogOpen(false)} />}
+      {editingPlan && <PlanDialog mode="edit-plan" plan={editingPlan} onClose={() => setEditingPlan(null)} />}
       {deletingPlan && (
         <CmsDialog
           title="Delete Plan"
@@ -282,10 +260,7 @@ export function PlansTemplate() {
           actionLabel="Delete Plan"
           onClose={() => setDeletingPlan(null)}
           onSubmit={() => {
-            setPlans((items) => items.filter((item) => item.name !== deletingPlan.name));
-            setMilestones((items) => items.filter((item) => item.title !== deletingPlan.name));
-            setTasks((items) => items.map((task) => (task.plan === deletingPlan.name ? { ...task, plan: '' } : task)));
-            setDeletingPlan(null);
+            deletePlan.mutate(deletingPlan.id, { onSuccess: () => setDeletingPlan(null) });
           }}
         >
           <Text size="sm">This plan will be removed, and its tasks will remain without a plan assignment.</Text>

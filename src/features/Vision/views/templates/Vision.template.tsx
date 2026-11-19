@@ -2,60 +2,113 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Badge, Box, Button, Group, Paper, Progress, Text, Title } from '@mantine/core';
+import {
+  ActionIcon,
+  Alert,
+  Anchor,
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  Group,
+  Paper,
+  Progress,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import { GoalCategoryIcon } from '@components/GoalCategoryIcon';
-import { goals } from '@features/Goal/views/data/goals';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
+import {
+  useCreateWishlistItem,
+  useDeleteWishlistItem,
+  useGetVision,
+  useListWishlist,
+  useUpdateWishlistItem,
+} from '@core/Vision/infrastructure/vision.hook';
 import { VisionDialog } from '../components/VisionDialog';
+import { VisionCover } from '../components/VisionCover';
 import styles from './Vision.module.css';
 
-const connectedGoals = goals
-  .map((goal, iconIndex) => ({ ...goal, iconIndex }))
-  .sort((first, second) => second.progress - first.progress)
-  .slice(0, 4);
-
 export function VisionTemplate() {
-  const [wishlist, setWishlist] = useState([
-    'Travel to Japan with family',
-    'Build a house for parents',
-    'Have multiple income streams',
-    'Stay healthy and active',
-    'Be a good role model for my child',
-  ]);
-  const [checkedItems, setCheckedItems] = useState(['Travel to Japan with family', 'Build a house for parents']);
+  const visionQuery = useGetVision();
+  const goalsQuery = useListGoals({ archived: false });
+  const wishlistQuery = useListWishlist();
+  const createWishlistItem = useCreateWishlistItem();
+  const updateWishlistItem = useUpdateWishlistItem();
+  const deleteWishlistItem = useDeleteWishlistItem();
   const [draft, setDraft] = useState('');
   const [adding, setAdding] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const vision = visionQuery.data?.data;
+  const wishlist = wishlistQuery.data?.data ?? [];
+  const connectedGoals = [...(goalsQuery.data?.data ?? [])]
+    .sort((first, second) => second.progress - first.progress)
+    .slice(0, 4);
 
   const saveWishlistItem = () => {
-    const item = draft.trim();
-    if (!item) return;
-    setWishlist((items) => [...items, item]);
-    setDraft('');
-    setAdding(false);
+    const text = draft.trim();
+    if (!text) return;
+    setActionError('');
+    createWishlistItem.mutate(
+      { text },
+      {
+        onSuccess: () => {
+          setDraft('');
+          setAdding(false);
+        },
+        onError: () => setActionError('Unable to add this wishlist item.'),
+      }
+    );
   };
+
+  const isLoading = visionQuery.isLoading || goalsQuery.isLoading || wishlistQuery.isLoading;
+  const hasError = visionQuery.isError || goalsQuery.isError || wishlistQuery.isError;
 
   return (
     <CmsPageLayout active="Vision">
-      <Paper className={styles.hero}>
-        <Button className={styles.editVision} variant="default" onClick={() => setDialogOpen(true)}>
-          Edit Vision
-        </Button>
-        <Badge variant="light">MY LIFE VISION</Badge>
-        <Title order={2}>Financial Freedom at 60</Title>
-        <Text className={styles.heroDescription}>
-          Have enough passive income to live comfortably, travel with family, stay healthy, and live a meaningful life.
+      {hasError && (
+        <Alert color="red" mb="md">
+          Unable to load vision data. Refresh the page and try again.
+        </Alert>
+      )}
+      {actionError && (
+        <Alert color="red" mb="md">
+          {actionError}
+        </Alert>
+      )}
+      {isLoading && (
+        <Text c="dimmed" mb="md">
+          Loading vision…
         </Text>
-        <Group className={styles.targets}>
-          <Paper>
-            <Text c="dimmed">Target Age</Text>
-            <b>60 years old</b>
-          </Paper>
-          <Paper>
-            <Text c="dimmed">Target Year</Text>
-            <b>2056</b>
-          </Paper>
-        </Group>
+      )}
+      <Paper className={styles.hero}>
+        <VisionCover style={vision?.style ?? 'Horizon Line'} />
+        <Button className={styles.editVision} variant="default" onClick={() => setDialogOpen(true)}>
+          {vision ? 'Edit Vision' : 'Create Vision'}
+        </Button>
+        <Box className={styles.heroContent}>
+          <Badge variant="light">MY LIFE VISION</Badge>
+          <Title order={2}>{vision?.title ?? 'No life vision saved'}</Title>
+          <Text className={styles.heroDescription}>
+            {vision?.description ?? 'Create a long-term vision to give your goals a clear direction.'}
+          </Text>
+          {vision && (
+            <Group className={styles.targets}>
+              <Paper>
+                <Text c="dimmed">Target Age</Text>
+                <b>{vision.targetAge} years old</b>
+              </Paper>
+              <Paper>
+                <Text c="dimmed">Target Year</Text>
+                <b>{vision.targetYear}</b>
+              </Paper>
+            </Group>
+          )}
+        </Box>
       </Paper>
 
       <Box className={styles.columns}>
@@ -63,56 +116,86 @@ export function VisionTemplate() {
           <Group justify="space-between">
             <Box>
               <Title order={3}>Goals Connected to This Vision</Title>
-              <Text c="dimmed">These goals help make my life vision a reality.</Text>
+              <Text c="dimmed">Active goals from your account.</Text>
             </Box>
             <Button component={Link} href="/goals" variant="subtle">
               View all goals
             </Button>
           </Group>
           <Box className={styles.connectedList}>
-            {connectedGoals.map(({ title, description, progress, color, iconIndex }) => (
-              <Paper className={styles.connectedCard} key={title}>
+            {connectedGoals.map((goal, iconIndex) => (
+              <Paper className={styles.connectedCard} key={goal.id}>
                 <Group wrap="nowrap">
-                  <Box className={styles.areaIcon} style={{ backgroundColor: color }}>
+                  <Box className={styles.areaIcon} style={{ backgroundColor: goal.color }}>
                     <GoalCategoryIcon index={iconIndex} />
                   </Box>
-                  <b>{title}</b>
+                  <Anchor component={Link} href={`/goals/detail?id=${encodeURIComponent(goal.id)}`} fw={600}>
+                    {goal.title}
+                  </Anchor>
                 </Group>
                 <Group className={styles.progressLine} wrap="nowrap">
-                  <Progress value={progress} color="blue" />
-                  <b>{progress}%</b>
+                  <Progress value={goal.progress} color={goal.color} />
+                  <b>{goal.progress}%</b>
                 </Group>
-                <Text c="dimmed">{description}</Text>
+                <Text c="dimmed">{goal.description}</Text>
               </Paper>
             ))}
+            {!connectedGoals.length && !goalsQuery.isLoading && <Text c="dimmed">No active goals yet.</Text>}
           </Box>
         </Paper>
-        <Paper className={styles.card}>
+        <Paper className={`${styles.card} ${styles.wishlistCard}`}>
           <Title order={3}>Vision Wishlist</Title>
-          <Text c="dimmed">Things I want to experience or achieve in my lifetime.</Text>
+          <Text c="dimmed">Things you want to experience or achieve in your lifetime.</Text>
           <Box className={styles.wishlist}>
             {wishlist.map((item) => (
-              <label key={item} className={styles.wishlistItem}>
-                <input
-                  type="checkbox"
-                  checked={checkedItems.includes(item)}
+              <Group key={item.id} justify="space-between" wrap="nowrap" className={styles.wishlistItem}>
+                <Checkbox
+                  label={item.text}
+                  radius="sm"
+                  classNames={{ root: styles.wishlistCheckbox, label: styles.wishlistLabel }}
+                  styles={{
+                    label: {
+                      textDecoration: item.checked ? 'line-through' : undefined,
+                      color: item.checked ? '#8392a7' : '#34445a',
+                    },
+                  }}
+                  checked={item.checked}
+                  disabled={updateWishlistItem.isPending}
                   onChange={(event) =>
-                    setCheckedItems((items) =>
-                      event.currentTarget.checked ? [...items, item] : items.filter((checked) => checked !== item)
+                    updateWishlistItem.mutate(
+                      { id: item.id, input: { checked: event.currentTarget.checked } },
+                      { onError: () => setActionError('Unable to update this wishlist item.') }
                     )
                   }
                 />
-                {item}
-              </label>
+                <ActionIcon
+                  variant="subtle"
+                  color="red"
+                  size="lg"
+                  radius="md"
+                  disabled={deleteWishlistItem.isPending}
+                  aria-label={`Delete ${item.text}`}
+                  onClick={() =>
+                    deleteWishlistItem.mutate(item.id, {
+                      onError: () => setActionError('Unable to delete this wishlist item.'),
+                    })
+                  }
+                >
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Group>
             ))}
+            {!wishlist.length && !wishlistQuery.isLoading && <Text c="dimmed">Your wishlist is empty.</Text>}
           </Box>
           {adding ? (
             <Box className={styles.draft}>
-              <input
+              <TextInput
                 autoFocus
+                label="Wishlist item"
+                aria-label="Wishlist item"
                 value={draft}
                 placeholder="Add wishlist item"
-                onChange={(event) => setDraft(event.target.value)}
+                onChange={(event) => setDraft(event.currentTarget.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') saveWishlistItem();
                   if (event.key === 'Escape') {
@@ -134,18 +217,26 @@ export function VisionTemplate() {
                 >
                   Cancel
                 </Button>
-                <Button onClick={saveWishlistItem}>Add Item</Button>
+                <Button onClick={saveWishlistItem} loading={createWishlistItem.isPending}>
+                  Add Item
+                </Button>
               </Group>
             </Box>
           ) : (
-            <Button variant="subtle" onClick={() => setAdding(true)}>
+            <Button
+              variant="light"
+              fullWidth
+              mt="md"
+              leftSection={<IconPlus size={16} />}
+              onClick={() => setAdding(true)}
+            >
               Add Wishlist
             </Button>
           )}
         </Paper>
       </Box>
 
-      {dialogOpen && <VisionDialog onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && <VisionDialog vision={vision} onClose={() => setDialogOpen(false)} />}
     </CmsPageLayout>
   );
 }

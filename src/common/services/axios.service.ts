@@ -1,8 +1,11 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { BASE_API_URL } from '@configs/base.config';
+import { LIFEPLAN_ACCESS_TOKEN_KEY } from '@configs/base.config';
+import { localStorageService } from './localStorage.service';
 
 export interface AxiosServiceOptions {
   baseURL?: string;
+  accessToken?: () => string | null;
 }
 
 export class AxiosService {
@@ -15,6 +18,14 @@ export class AxiosService {
     this.client = axios.create({
       baseURL: this.options.baseURL ?? BASE_API_URL,
     });
+
+    if (this.options.accessToken) {
+      this.client.interceptors.request.use((config) => {
+        const token = this.options.accessToken?.();
+        if (token) config.headers.Authorization = `Bearer ${token}`;
+        return config;
+      });
+    }
   }
 
   get<T = unknown, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<T> {
@@ -40,4 +51,14 @@ export class AxiosService {
   delete<T = unknown, D = unknown>(url: string, config?: AxiosRequestConfig<D>): Promise<T> {
     return this.client.delete<T, AxiosResponse<T, D>, D>(url, config).then((res) => res.data);
   }
+}
+
+/** Dedicated client for the LifePlan Express API; its token is never sent to other API hosts. */
+export const lifePlanApi = new AxiosService({
+  baseURL: BASE_API_URL,
+  accessToken: () => localStorageService.get(LIFEPLAN_ACCESS_TOKEN_KEY),
+});
+
+export function getLifePlanApiOrigin(): string {
+  return new URL(BASE_API_URL ?? 'http://localhost:4000/api/v1').origin;
 }

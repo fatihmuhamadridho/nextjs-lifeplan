@@ -3,10 +3,9 @@ import { useState } from 'react';
 import { Box, NumberInput, Select, Text, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { CmsDialog } from '@components/CmsDialog';
-import { plans } from '@features/Plan/views/data/plans';
 import { updateTaskProgress, type Task } from '../data/tasks';
-import { useWeeks } from '@features/Plan/views/data/weekStore';
 import { useTasks } from '../data/taskStore';
+import { useListPlans, useListWeeks } from '@core/Plan/infrastructure/plan.hook';
 import styles from '../templates/Tasks.module.css';
 export function TaskCreateDialog({
   onClose,
@@ -20,10 +19,14 @@ export function TaskCreateDialog({
   task?: Task;
 }) {
   const [, setTasks] = useTasks();
-  const [weeks] = useWeeks();
+  const plansQuery = useListPlans();
+  const plans = plansQuery.data?.data ?? [];
   const [assignedWeek, setAssignedWeek] = useState<string | null>(task?.week ?? week ?? null);
   const [title, setTitle] = useState(task?.title ?? '');
   const [plan, setPlan] = useState(task?.plan ?? linkedPlan ?? '');
+  const selectedPlan = plans.find((item) => item.name === plan);
+  const weeksQuery = useListWeeks({ planId: selectedPlan?.id }, Boolean(selectedPlan));
+  const weeks = (weeksQuery.data?.data ?? []).filter((item) => item.planId === selectedPlan?.id);
   const [due, setDue] = useState<string | null>(task?.due ?? null);
   const [priority, setPriority] = useState<string | null>(task?.priority ?? 'Medium');
   const [target, setTarget] = useState<number | string>(task?.target ?? 10);
@@ -48,7 +51,7 @@ export function TaskCreateDialog({
                     plan,
                     week: assignedWeek ?? undefined,
                     due,
-                    priority: priority || 'Medium',
+                    priority: (priority || 'Medium') as Task['priority'],
                     current: Number(current),
                     target: Number(target),
                     successThreshold: Number(threshold),
@@ -62,16 +65,18 @@ export function TaskCreateDialog({
         setTasks((items) => [
           ...items,
           {
-            id: Date.now(),
+            id: crypto.randomUUID(),
             title: title.trim(),
             plan: plan.trim(),
             week: assignedWeek ?? undefined,
             due,
-            priority: priority || 'Medium',
+            priority: (priority || 'Medium') as Task['priority'],
             current: 0,
             target: Number(target),
             successThreshold: Number(threshold),
             reachedAt: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
         ]);
         onClose();
@@ -81,6 +86,7 @@ export function TaskCreateDialog({
         <TextInput
           label="Task title"
           required
+          maxLength={2000}
           value={title}
           onChange={(event) => setTitle(event.currentTarget.value)}
           placeholder="What needs to get done?"
@@ -144,8 +150,8 @@ export function TaskCreateDialog({
             Target amount is the total you aim for, such as 10 sessions or 10 pages.
           </Text>
           <Text size="12px" c="dimmed" lh={1.5}>
-            Progress {Number(current) || 0}/{Number(target) || 0}. Reach {Number(threshold) || 0}% by the due date to
-            complete this task.
+            Progress {Number(current) || 0}/{Number(target) || 0}. Reach {Number(threshold) || 0}% to complete this
+            task, even after its due date.
           </Text>
         </Box>
       </Box>

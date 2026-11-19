@@ -3,23 +3,26 @@
 import { Avatar, Box, Group, Menu, Text, UnstyledButton } from '@mantine/core';
 import { IconChevronRight, IconLogout, IconUser, IconLock } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { useUserContext } from '@contexts/user.context';
+import { useGetProfile, useLogout } from '@core/User/infrastructure/account.hook';
 import styles from './SidebarAccount.module.css';
 import { useState } from 'react';
 
 export function SidebarAccount() {
   const [opened, setOpened] = useState(false);
-  const { state, setState } = useUserContext();
+  const { data: profile } = useGetProfile();
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const name = `${state?.data?.firstName ?? ''} ${state?.data?.lastName ?? ''}`.trim() || 'Guest User';
-  const initials = `${state?.data?.firstName?.[0] ?? ''}${state?.data?.lastName?.[0] ?? ''}` || 'GU';
-  const logout = async () => {
-    await queryClient.cancelQueries();
-    setState(undefined);
-    queryClient.clear();
-    window.location.replace('/');
+  const logout = useLogout();
+  const name = profile?.data.name ?? 'Guest User';
+  const initials =
+    name
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'GU';
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/');
   };
   return (
     <Menu
@@ -38,7 +41,7 @@ export function SidebarAccount() {
           className={`${styles.trigger} ${opened ? styles.triggerOpened : ''}`}
           aria-label="Open account menu"
         >
-          <Avatar src={state?.data?.image} color="blue" radius="xl" styles={{ placeholder: { fontSize: 12 } }}>
+          <Avatar color="blue" radius="xl" styles={{ placeholder: { fontSize: 12 } }}>
             {initials}
           </Avatar>
           <Text className={styles.name} size="12px" fw={600}>
@@ -49,7 +52,7 @@ export function SidebarAccount() {
       </Menu.Target>
       <Menu.Dropdown p={6}>
         <Group className={styles.accountHeader} gap="sm" wrap="nowrap">
-          <Avatar src={state?.data?.image} color="blue" radius="xl" styles={{ placeholder: { fontSize: 12 } }}>
+          <Avatar color="blue" radius="xl" styles={{ placeholder: { fontSize: 12 } }}>
             {initials}
           </Avatar>
           <Box style={{ minWidth: 0 }}>
@@ -69,7 +72,7 @@ export function SidebarAccount() {
           Change Password
         </Menu.Item>
         <Menu.Divider />
-        <Menu.Item color="red" leftSection={<IconLogout size={18} />} onClick={logout}>
+        <Menu.Item color="red" leftSection={<IconLogout size={18} />} onClick={handleLogout}>
           Logout
         </Menu.Item>
       </Menu.Dropdown>

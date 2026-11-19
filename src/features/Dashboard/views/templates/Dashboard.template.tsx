@@ -4,13 +4,12 @@ import { CmsBreadcrumbs } from '@components/CmsBreadcrumbs';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { goals } from '@features/Goal/views/data/goals';
-import { plans } from '@features/Plan/views/data/plans';
 import { taskStatus } from '@features/Task/views/data/tasks';
 import { useTasks } from '@features/Task/views/data/taskStore';
 import { TaskActions } from '@features/Task/views/components/TaskActions';
 import { TaskStatusBadge } from '@features/Task/views/components/TaskProgress';
 import {
+  Alert,
   Badge,
   Box,
   Button,
@@ -35,6 +34,9 @@ import {
 import styles from './Dashboard.module.css';
 import { DashboardSidebar } from '@components/DashboardSidebar';
 import { DashboardNavbar } from '@components/DashboardNavbar';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
+import { useListPlans } from '@core/Plan/infrastructure/plan.hook';
+import { useGetVision } from '@core/Vision/infrastructure/vision.hook';
 
 export function DashboardTemplate({
   userName,
@@ -47,7 +49,13 @@ export function DashboardTemplate({
 }) {
   const [active, setActive] = useState('Dashboard');
   const router = useRouter();
-  const [tasks] = useTasks();
+  const [tasks, , tasksQuery] = useTasks();
+  const goalsQuery = useListGoals({ archived: false });
+  const plansQuery = useListPlans();
+  const visionQuery = useGetVision();
+  const goals = goalsQuery.data?.data ?? [];
+  const plans = plansQuery.data?.data ?? [];
+  const vision = visionQuery.data?.data;
   const completed = tasks.filter((task) => taskStatus(task) === 'Completed').length;
   const taskRate = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
   const goalProgress = goals.length
@@ -71,6 +79,16 @@ export function DashboardTemplate({
         <DashboardNavbar userName={userName} avatarSrc={avatarSrc} avatarLabel={avatarLabel} />
         <main className={styles.main}>
           <CmsBreadcrumbs />
+          {(tasksQuery.isError || goalsQuery.isError || plansQuery.isError || visionQuery.isError) && (
+            <Alert color="red" mb="md">
+              Unable to load some dashboard data. Refresh the page and try again.
+            </Alert>
+          )}
+          {(tasksQuery.isLoading || goalsQuery.isLoading || plansQuery.isLoading || visionQuery.isLoading) && (
+            <Text c="dimmed" mb="md">
+              Loading dashboard…
+            </Text>
+          )}
           <section className={styles.stats}>
             <Paper className={styles.stat}>
               <Text className={styles.label}>GOAL PROGRESS</Text>
@@ -88,7 +106,7 @@ export function DashboardTemplate({
                 />
               </Group>
               <Text>
-                <IconActivity size={14} /> On track · 5/12 goals
+                <IconActivity size={14} /> {goals.length} active goals
               </Text>
             </Paper>
             <Paper className={styles.stat}>
@@ -116,12 +134,11 @@ export function DashboardTemplate({
             <Paper className={styles.stat}>
               <Group justify="space-between">
                 <Text className={styles.label}>ACTIVE PLANS</Text>
-                <Badge color="teal">↗ +12% vs last week</Badge>
+                <Badge color="teal">{plans.filter((plan) => plan.status === 'On Hold').length} on hold</Badge>
               </Group>
               <Title order={2}>{activePlans.length}</Title>
               <Text>
-                <IconCheck size={14} /> {plans.filter((plan) => plan.status === 'On Hold').length} on hold ?{' '}
-                {plans.filter((plan) => plan.status === 'Not Started').length} not started
+                <IconCheck size={14} /> {plans.filter((plan) => plan.status === 'Not Started').length} not started
               </Text>
             </Paper>
           </section>
@@ -132,26 +149,23 @@ export function DashboardTemplate({
                   <b>
                     <IconTarget size={16} /> MY BIG VISION
                   </b>
-                  <Badge
-                    className={styles.visionTarget}
-                    color="yellow"
-                    variant="light"
-                    leftSection={<IconStar size={13} />}
-                  >
-                    Target: Age 60 (Year 2056)
-                  </Badge>
+                  {vision && (
+                    <Badge
+                      className={styles.visionTarget}
+                      color="yellow"
+                      variant="light"
+                      leftSection={<IconStar size={13} />}
+                    >
+                      Target age {vision.targetAge} · {vision.targetYear}
+                    </Badge>
+                  )}
                 </Group>
-                <Box className={styles.landscape}>
-                  <span>Serene Mountain & Ocean Retreat Vision</span>
-                </Box>
-                <Title order={2}>Financial Freedom at 60</Title>
-                <Text>
-                  Have enough passive income to live comfortably, travel with family, and help others. Live a healthy
-                  and meaningful life.
-                </Text>
+                <Box className={styles.landscape}>{vision && <span>{vision.style}</span>}</Box>
+                <Title order={2}>{vision?.title ?? 'No life vision saved'}</Title>
+                <Text>{vision?.description ?? 'Create a vision to connect your goals to a long-term direction.'}</Text>
                 <Group className={styles.visionFooter} justify="space-between">
                   <Text>
-                    <IconClock size={15} /> 30 Years Journey
+                    <IconClock size={15} /> {vision ? `Target year ${vision.targetYear}` : 'Life vision'}
                   </Text>
                   <Button variant="light" onClick={() => router.push('/vision')}>
                     View Vision <IconArrowRight size={15} />
@@ -223,7 +237,7 @@ export function DashboardTemplate({
                     View All
                   </Button>
                 </Group>
-                {pendingTasks.length === 0 && (
+                {pendingTasks.length === 0 && !tasksQuery.isLoading && (
                   <Text>No active tasks. Review completed and failed tasks on the Tasks page.</Text>
                 )}
                 {pendingTasks.slice(0, 4).map((task) => (

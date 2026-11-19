@@ -47,7 +47,6 @@ export function CmsBreadcrumbs({ items }: { items?: BreadcrumbItem[] }) {
   }
   const href = `/${segment}`;
   const isDetail = pathname.endsWith('/detail');
-  const detailTitle = section === 'Goals' ? 'Build Passive Income' : 'Build E-Commerce Business';
 
   return (
     <nav aria-label="Breadcrumb" style={{ marginBottom: 20 }}>
@@ -68,7 +67,7 @@ export function CmsBreadcrumbs({ items }: { items?: BreadcrumbItem[] }) {
         )}
         {isDetail && (
           <Text size="sm" c="dimmed" aria-current="page">
-            {detailTitle}
+            Details
           </Text>
         )}
       </Breadcrumbs>

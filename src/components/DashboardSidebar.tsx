@@ -16,7 +16,7 @@ import {
 } from '@tabler/icons-react';
 import styles from './DashboardSidebar.module.css';
 import { SidebarAccount } from './SidebarAccount';
-import { useUserContext } from '@contexts/user.context';
+import { useGetProfile } from '@core/User/infrastructure/account.hook';
 
 const navGroups = [
   {
@@ -52,8 +52,8 @@ export function DashboardSidebar({
   const [tasks] = useTasks();
   const activeTaskCount = tasks.filter((task) => ['To Do', 'In Progress'].includes(taskStatus(task))).length;
   const router = useRouter();
-  const { state } = useUserContext();
-  const firstName = state?.data?.firstName || 'Guest';
+  const { data: profile } = useGetProfile();
+  const firstName = profile?.data.name.split(/\s+/)[0] || 'Guest';
   const [opened, setOpened] = useState(false);
   const routes: Record<string, string> = {
     Dashboard: '/dashboard',

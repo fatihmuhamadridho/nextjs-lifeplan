@@ -1,33 +1,50 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Box, Button, Group, Menu, Paper, Progress, Text, Title } from '@mantine/core';
-import { TaskCreateDialog } from '@features/Task/views/components/TaskCreateDialog';
-import { IconBriefcase, IconCalendarEvent, IconChevronRight, IconDotsVertical } from '@tabler/icons-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Alert, Badge, Box, Button, Group, Menu, Paper, Progress, Text, Title, UnstyledButton } from '@mantine/core';
+import { IconBriefcase, IconCalendarEvent, IconChevronDown, IconDotsVertical } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
-import { PlanDialog } from '../components/PlanDialog';
-import { useWeeks, weekDateRange, type WeekPlan } from '../data/weekStore';
-import { WeekDialog } from '../components/WeekDialog';
 import { CmsDialog } from '@components/CmsDialog';
-import styles from './PlanDetail.module.css';
+import { PlanDialog } from '../components/PlanDialog';
+import { WeekDialog } from '../components/WeekDialog';
+import { weekDateRange } from '../utils/weekDateRange';
+import type { Week } from '@core/Plan/domain/plan.interface';
+import { useListPlans, useListWeeks, useDeletePlan, useDeleteWeek } from '@core/Plan/infrastructure/plan.hook';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
 import { useTasks } from '@features/Task/views/data/taskStore';
 import { taskStatus } from '@features/Task/views/data/tasks';
+import { TaskCreateDialog } from '@features/Task/views/components/TaskCreateDialog';
 import { TaskProgress, TaskStatusBadge } from '@features/Task/views/components/TaskProgress';
 import { TaskActions } from '@features/Task/views/components/TaskActions';
 import { PlanOverview } from '../components/PlanOverview';
-import { usePlans } from '../data/planStore';
+import styles from './PlanDetail.module.css';
 
 export function PlanDetailTemplate() {
   const router = useRouter();
-  const [plans, setPlans] = usePlans();
-  const activePlan = plans.find((plan) => plan.name === 'Build E-Commerce Business');
+  const searchParams = useSearchParams();
+  const requestedPlanId = searchParams.get('id');
+  const plansQuery = useListPlans();
+  const goalsQuery = useListGoals();
+  const deletePlan = useDeletePlan();
+  const deleteWeek = useDeleteWeek();
+  const [allTasks] = useTasks();
+  const plans = plansQuery.data?.data ?? [];
+  const activePlan = plans.find((plan) => plan.id === requestedPlanId) ?? plans[0];
+  const weeksQuery = useListWeeks({ planId: activePlan?.id }, Boolean(activePlan));
+  const goal = goalsQuery.data?.data.find((item) => item.title === activePlan?.goal);
+  const weeks = (weeksQuery.data?.data ?? []).filter((week) => week.planId === activePlan?.id);
+  const sortedWeeks = [...weeks].sort((first, second) => Number(second.week.slice(5)) - Number(first.week.slice(5)));
+  const tasks = allTasks.filter((task) => task.plan === activePlan?.name);
+  const [tab, setTab] = useState('Overview');
+  const [expandedWeek, setExpandedWeek] = useState(-1);
+  const [addWeekOpen, setAddWeekOpen] = useState(false);
+  const [editPlanOpen, setEditPlanOpen] = useState(false);
   const [deletePlanOpen, setDeletePlanOpen] = useState(false);
-  const [weeks, setWeeks] = useWeeks();
-  const sortedWeeks = [...weeks].sort((a, b) => Number(b.week.slice(5)) - Number(a.week.slice(5)));
-  const [weekAction, setWeekAction] = useState<{ type: 'edit' | 'delete'; week: WeekPlan } | null>(null);
-  const [allTasks, setTasks] = useTasks();
-  const tasks = allTasks.filter((task) => task.plan === 'Build E-Commerce Business');
+  const [taskWeek, setTaskWeek] = useState<string | null>(null);
+  const [weekAction, setWeekAction] = useState<{ type: 'edit' | 'delete' | 'duplicate'; week: Week } | null>(null);
+
   const renderTasks = (week: string, preview = false) => (
     <Box className={styles.taskList}>
       {tasks
@@ -55,29 +72,26 @@ export function PlanDetailTemplate() {
         ))}
     </Box>
   );
+
   const weekProgress = (week: string) => {
     const items = tasks.filter((task) => task.week === week);
     return items.length
       ? Math.round((items.filter((task) => taskStatus(task) === 'Completed').length / items.length) * 100)
       : 0;
   };
-  const [tab, setTab] = useState('Overview');
-  const [expandedWeek, setExpandedWeek] = useState(-1);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [taskWeek, setTaskWeek] = useState<string | null>(null);
 
-  const renderWeekActions = (item: WeekPlan) => (
+  const renderWeekActions = (week: Week) => (
     <Box onClick={(event) => event.stopPropagation()}>
       <Menu position="bottom-end" shadow="md" withinPortal>
         <Menu.Target>
-          <Button variant="subtle" size="compact-sm" aria-label={`More options for ${item.week}`}>
+          <Button variant="subtle" size="compact-sm" aria-label={`More options for ${week.week}`}>
             <IconDotsVertical size={16} />
           </Button>
         </Menu.Target>
         <Menu.Dropdown>
-          <Menu.Item onClick={() => setWeekAction({ type: 'edit', week: item })}>Edit Week</Menu.Item>
-          <Menu.Item color="red" onClick={() => setWeekAction({ type: 'delete', week: item })}>
+          <Menu.Item onClick={() => setWeekAction({ type: 'edit', week })}>Edit Week</Menu.Item>
+          <Menu.Item onClick={() => setWeekAction({ type: 'duplicate', week })}>Duplicate Week</Menu.Item>
+          <Menu.Item color="red" onClick={() => setWeekAction({ type: 'delete', week })}>
             Delete Week
           </Menu.Item>
         </Menu.Dropdown>
@@ -85,201 +99,238 @@ export function PlanDetailTemplate() {
     </Box>
   );
 
+  const isLoading = plansQuery.isLoading || weeksQuery.isLoading || goalsQuery.isLoading;
+  const hasError = plansQuery.isError || weeksQuery.isError || goalsQuery.isError;
+
   return (
     <CmsPageLayout
       active="Plans"
       breadcrumbs={[
         { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Goals', href: '/goals' },
-        { label: 'Build Passive Income', href: '/goals/detail' },
+        { label: 'Goals', href: goal ? `/goals/detail?id=${encodeURIComponent(goal.id)}` : '/goals' },
+        ...(goal ? [{ label: goal.title, href: `/goals/detail?id=${encodeURIComponent(goal.id)}` }] : []),
         { label: 'Plans', href: '/plans' },
-        { label: 'Build E-Commerce Business' },
+        ...(activePlan ? [{ label: activePlan.name }] : []),
         ...(tab === 'Tasks' ? [{ label: 'Tasks' }] : []),
       ]}
     >
-      <Paper className={styles.header}>
-        <Group justify="space-between" align="center" className={styles.headerTop}>
-          <Group className={styles.titleGroup}>
-            <Box className={styles.icon}>
-              <IconBriefcase size={24} />
-            </Box>
-            <Box className={styles.titleInfo}>
-              <Title order={2}>Build E-Commerce Business</Title>
-              <Text className={styles.timeline}>
-                <IconCalendarEvent size={15} />
-                <span>
-                  Timeline <strong>Jan 2026 – Dec 2027</strong>
-                </span>
-              </Text>
-            </Box>
-          </Group>
-          <Menu position="bottom-end" shadow="md" withinPortal>
-            <Menu.Target>
-              <Button variant="default" aria-label="Plan actions">
-                <IconDotsVertical size={16} />
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item onClick={() => setEditOpen(true)}>Edit Plan</Menu.Item>
-              <Menu.Item color="red" onClick={() => setDeletePlanOpen(true)}>
-                Delete Plan
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-        <Group className={styles.progressRow} wrap="nowrap">
-          <Progress value={62} color="teal" />
-          <b>62%</b>
-        </Group>
-        <Group className={styles.tabs}>
-          {['Overview', 'Weekly Plans', 'Tasks'].map((name) => (
-            <Button
-              key={name}
-              variant="subtle"
-              className={tab === name ? styles.activeTab : ''}
-              onClick={() => setTab(name)}
-            >
-              {name}
-            </Button>
-          ))}
-        </Group>
-      </Paper>
-
-      {tab === 'Overview' && (
-        <Group className={styles.summary} align="stretch">
-          <Paper className={styles.card}>
-            <Text className={styles.label}>PLAN DESCRIPTION</Text>
-            <Text mt="md" size="13px" lh={1.6}>
-              Create and grow an e-commerce business from scratch, including product, marketing, and customer
-              management.
-            </Text>
-          </Paper>
-          <Paper className={styles.card}>
-            <Group wrap="nowrap">
-              <Box className={styles.targetIcon}>
-                <IconCalendarEvent size={22} />
-              </Box>
-              <Box>
-                <Text className={styles.label}>TARGET</Text>
-                <Title order={3} size={20}>
-                  Dec 2027
-                </Title>
-                <Text c="dimmed" size="13px">
-                  Remaining 1 year 3 months
-                </Text>
-              </Box>
-            </Group>
-          </Paper>
-        </Group>
+      {hasError && (
+        <Alert color="red" mb="md">
+          Unable to load plan details. Refresh the page and try again.
+        </Alert>
       )}
-
-      {tab === 'Overview' ? (
-        <PlanOverview
-          tasks={tasks}
-          renderWeekActions={renderWeekActions}
-          renderTasks={renderTasks}
-          onViewWeeks={() => {
-            setTab('Weekly Plans');
-            setExpandedWeek(sortedWeeks.findIndex((week) => week.week === 'Week 40'));
-          }}
-        />
-      ) : tab === 'Weekly Plans' ? (
-        <>
-          <Group justify="space-between" mt="lg">
-            <Title order={3} size={20}>
-              Weekly Plans
-            </Title>
-            <Button onClick={() => setDialogOpen(true)}>Add Week</Button>
-          </Group>
-          <Box className={styles.weeks}>
-            {sortedWeeks.map((item, index) => (
-              <Paper
-                className={styles.week}
-                key={item.id}
-                onClick={() => setExpandedWeek(expandedWeek === index ? -1 : index)}
-              >
-                <IconChevronRight className={styles.weekChevron} size={18} />
-                <Box className={styles.weekInfo}>
-                  <b>
-                    {item.week}
-                    {item.week === 'Week 40' && (
-                      <Text component="span" c="blue">
-                        {' '}
-                        (Current)
-                      </Text>
-                    )}
-                  </b>
-                  <Text c="dimmed" size="12px">
-                    {weekDateRange(item)}
-                  </Text>
-                </Box>
-                <Text>{weekProgress(item.week)}%</Text>
-                <Progress value={weekProgress(item.week)} color="teal" />
-                {renderWeekActions(item)}
-                {expandedWeek === index && (
-                  <Box className={styles.focus} onClick={(event) => event.stopPropagation()}>
-                    <Group justify="space-between" mb="sm">
-                      <Text fw={600} size="sm">
-                        Tasks:{' '}
-                        {tasks.filter((task) => task.week === item.week && taskStatus(task) === 'Completed').length}/
-                        {tasks.filter((task) => task.week === item.week).length} completed
-                      </Text>
-                      <Button size="xs" variant="light" onClick={() => setTaskWeek(item.week)}>
-                        Add Task
-                      </Button>
-                    </Group>
-                    {renderTasks(item.week)}
-                  </Box>
-                )}
-              </Paper>
-            ))}
-          </Box>
-        </>
-      ) : (
-        <Paper className={styles.card} mt="lg">
-          <Title order={3} size={20}>
-            {tab}
-          </Title>
-          <Text c="dimmed" size="13px" mb="lg">
-            All tasks for Build E-Commerce Business, grouped by week.
+      {isLoading && (
+        <Text c="dimmed" mb="md">
+          Loading plan details…
+        </Text>
+      )}
+      {!isLoading && !activePlan && (
+        <Paper className={styles.card} p="lg">
+          <Title order={2}>No plans yet</Title>
+          <Text c="dimmed" mt="sm">
+            Create a plan from one of your active goals.
           </Text>
-          {tasks.some((task) => !task.week) && (
-            <Box mb="lg">
-              <Text fw={600} mb="sm">
-                Unassigned tasks
-              </Text>
-              {renderTasks('')}
-            </Box>
-          )}
-          {sortedWeeks.map((week) => (
-            <Box key={week.week} mb="lg">
-              <Group justify="space-between" mb="sm">
-                <Text fw={600}>{week.week}</Text>
-                <Group gap="sm">
-                  <Text size="sm" c="dimmed">
-                    {weekDateRange(week)}
-                  </Text>
-                  {renderWeekActions(week)}
-                </Group>
-              </Group>
-              {renderTasks(week.week)}
-            </Box>
-          ))}
+          <Button component={Link} href="/plans" mt="md">
+            View plans
+          </Button>
         </Paper>
       )}
+      {activePlan && (
+        <>
+          <Paper className={styles.header}>
+            <Group justify="space-between" align="center" className={styles.headerTop}>
+              <Group className={styles.titleGroup}>
+                <Box className={styles.icon}>
+                  <IconBriefcase size={24} />
+                </Box>
+                <Box className={styles.titleInfo}>
+                  <Title order={2}>{activePlan.name}</Title>
+                  <Text className={styles.timeline}>
+                    <IconCalendarEvent size={15} />
+                    <span>
+                      Timeline <strong>{activePlan.timeline}</strong>
+                    </span>
+                  </Text>
+                </Box>
+              </Group>
+              <Group>
+                <Button variant="default" onClick={() => setEditPlanOpen(true)}>
+                  Edit Plan
+                </Button>
+                <Button variant="subtle" color="red" onClick={() => setDeletePlanOpen(true)}>
+                  Delete Plan
+                </Button>
+              </Group>
+            </Group>
+            <Group className={styles.progressRow} wrap="nowrap">
+              <Progress value={activePlan.progress} color="teal" />
+              <b>{activePlan.progress}%</b>
+            </Group>
+            {activePlan.focus && (
+              <Text c="dimmed" mb="md">
+                Focus: {activePlan.focus}
+              </Text>
+            )}
+            <Group className={styles.tabs}>
+              {['Overview', 'Weekly Plans', 'Tasks'].map((name) => (
+                <Button
+                  key={name}
+                  variant="subtle"
+                  className={tab === name ? styles.activeTab : ''}
+                  onClick={() => setTab(name)}
+                >
+                  {name}
+                </Button>
+              ))}
+            </Group>
+          </Paper>
 
-      {editOpen && activePlan && (
-        <PlanDialog
-          mode="edit-plan"
-          plan={activePlan}
-          onClose={() => setEditOpen(false)}
-          onSave={(updated) => {
-            setPlans((items) => items.map((item) => (item.name === activePlan.name ? updated : item)));
-            setTasks((items) =>
-              items.map((task) => (task.plan === activePlan.name ? { ...task, plan: updated.name } : task))
-            );
-          }}
-        />
+          {tab === 'Overview' && (
+            <PlanOverview
+              tasks={tasks}
+              weeks={weeks}
+              renderTasks={renderTasks}
+              onViewWeeks={() => setTab('Weekly Plans')}
+              renderWeekActions={renderWeekActions}
+            />
+          )}
+          {tab === 'Weekly Plans' && (
+            <>
+              <Group justify="space-between" mt="lg" mb="md">
+                <Box>
+                  <Title order={3}>Weekly plans</Title>
+                  <Text c="dimmed" size="sm">
+                    Schedule work into weeks for this plan.
+                  </Text>
+                </Box>
+                {sortedWeeks.length > 0 && <Button onClick={() => setAddWeekOpen(true)}>Add Week</Button>}
+              </Group>
+              {!isLoading && !hasError && !sortedWeeks.length && (
+                <Paper className={styles.emptyWeeks}>
+                  <Box className={styles.emptyWeeksIcon}>
+                    <IconCalendarEvent size={28} stroke={1.5} aria-hidden="true" />
+                  </Box>
+                  <Title order={4}>Plan your first week</Title>
+                  <Text>Set a date range, then add tasks to turn this plan into weekly progress.</Text>
+                  <Button onClick={() => setAddWeekOpen(true)}>Add First Week</Button>
+                </Paper>
+              )}
+              <Box className={styles.weeks}>
+                {sortedWeeks.map((week, index) => {
+                  const completed = tasks.filter(
+                    (task) => task.week === week.week && taskStatus(task) === 'Completed'
+                  ).length;
+                  const total = tasks.filter((task) => task.week === week.week).length;
+                  const today = new Date().toISOString().slice(0, 10);
+                  const isCurrent = week.start <= today && week.end >= today;
+                  const isExpanded = expandedWeek === index;
+                  const progress = weekProgress(week.week);
+                  return (
+                    <Paper key={week.id} className={styles.week}>
+                      <Box className={styles.weekHeader}>
+                        <UnstyledButton
+                          className={styles.weekToggle}
+                          aria-expanded={isExpanded}
+                          aria-controls={`week-tasks-${week.id}`}
+                          onClick={() => setExpandedWeek(isExpanded ? -1 : index)}
+                        >
+                          <Box className={styles.weekInfo}>
+                            <Group gap="sm">
+                              <Text fw={600}>{week.week}</Text>
+                              {isCurrent && (
+                                <Badge variant="light" size="sm">
+                                  Current
+                                </Badge>
+                              )}
+                            </Group>
+                            <Text className={styles.weekDates}>
+                              <IconCalendarEvent size={15} aria-hidden="true" />
+                              {weekDateRange(week)}
+                            </Text>
+                          </Box>
+                          <Box className={styles.weekProgress}>
+                            <Group justify="space-between" mb={7} gap="sm">
+                              <Text size="xs" c="dimmed">
+                                {completed}/{total} tasks completed
+                              </Text>
+                              <Text size="sm" fw={600}>
+                                {progress}%
+                              </Text>
+                            </Group>
+                            <Progress value={progress} color="teal" size="sm" />
+                          </Box>
+                          <IconChevronDown
+                            size={18}
+                            className={styles.weekChevron}
+                            style={{ transform: isExpanded ? 'rotate(180deg)' : undefined }}
+                            aria-hidden="true"
+                          />
+                        </UnstyledButton>
+                        {renderWeekActions(week)}
+                      </Box>
+                      {isExpanded && (
+                        <Box id={`week-tasks-${week.id}`} className={styles.focus}>
+                          <Group justify="space-between" mb="sm">
+                            <Text fw={600} size="sm">
+                              Tasks: {completed}/{total} completed
+                            </Text>
+                            <Button size="xs" variant="light" onClick={() => setTaskWeek(week.week)}>
+                              Add Task
+                            </Button>
+                          </Group>
+                          {total ? (
+                            renderTasks(week.week)
+                          ) : (
+                            <Text size="sm" c="dimmed">
+                              No tasks for this week yet.
+                            </Text>
+                          )}
+                        </Box>
+                      )}
+                    </Paper>
+                  );
+                })}
+              </Box>
+            </>
+          )}
+          {tab === 'Tasks' && (
+            <Paper className={styles.card} mt="lg">
+              <Group justify="space-between" mb="md">
+                <Box>
+                  <Title order={3}>Tasks</Title>
+                  <Text size="sm" c="dimmed">
+                    Tasks assigned to {activePlan.name}.
+                  </Text>
+                </Box>
+                <Button onClick={() => setTaskWeek('')}>Add Task</Button>
+              </Group>
+              {!tasks.length && <Text c="dimmed">No tasks assigned to this plan yet.</Text>}
+              {tasks.some((task) => !task.week) && (
+                <Box mb="lg">
+                  <Text fw={600} mb="sm">
+                    Unassigned tasks
+                  </Text>
+                  {renderTasks('')}
+                </Box>
+              )}
+              {sortedWeeks.map((week) => (
+                <Box key={week.id} mb="lg">
+                  <Group justify="space-between" mb="sm">
+                    <Text fw={600}>{week.week}</Text>
+                    <Text size="sm" c="dimmed">
+                      {weekDateRange(week)}
+                    </Text>
+                  </Group>
+                  {renderTasks(week.week)}
+                </Box>
+              ))}
+            </Paper>
+          )}
+        </>
+      )}
+
+      {editPlanOpen && activePlan && (
+        <PlanDialog mode="edit-plan" plan={activePlan} onClose={() => setEditPlanOpen(false)} />
       )}
       {deletePlanOpen && activePlan && (
         <CmsDialog
@@ -287,49 +338,52 @@ export function PlanDetailTemplate() {
           description={`Delete ${activePlan.name}?`}
           actionLabel="Delete Plan"
           onClose={() => setDeletePlanOpen(false)}
-          onSubmit={() => {
-            setPlans((items) => items.filter((item) => item.name !== activePlan.name));
-            setTasks((items) => items.map((task) => (task.plan === activePlan.name ? { ...task, plan: '' } : task)));
-            setDeletePlanOpen(false);
-            router.push('/plans');
-          }}
+          onSubmit={() => deletePlan.mutate(activePlan.id, { onSuccess: () => router.replace('/plans') })}
         >
-          <Text size="sm">This plan will be removed, and its tasks will remain without a plan assignment.</Text>
+          <Text size="sm">This removes its generated milestone and leaves its tasks unassigned.</Text>
+          {deletePlan.isError && (
+            <Alert color="red" mt="md">
+              Unable to delete this plan.
+            </Alert>
+          )}
         </CmsDialog>
       )}
-      {taskWeek && (
-        <TaskCreateDialog
-          linkedPlan="Build E-Commerce Business"
-          week={taskWeek}
-          onClose={() => {
-            setTaskWeek(null);
-          }}
+      {taskWeek !== null && activePlan && (
+        <TaskCreateDialog linkedPlan={activePlan.name} week={taskWeek || undefined} onClose={() => setTaskWeek(null)} />
+      )}
+      {addWeekOpen && activePlan && <WeekDialog planId={activePlan.id} onClose={() => setAddWeekOpen(false)} />}
+      {weekAction?.type === 'edit' && (
+        <WeekDialog planId={weekAction.week.planId} week={weekAction.week} onClose={() => setWeekAction(null)} />
+      )}
+      {weekAction?.type === 'duplicate' && (
+        <WeekDialog
+          planId={weekAction.week.planId}
+          week={weekAction.week}
+          duplicate
+          onClose={() => setWeekAction(null)}
         />
       )}
-      {dialogOpen && <WeekDialog onClose={() => setDialogOpen(false)} />}
-      {weekAction?.type === 'edit' && <WeekDialog week={weekAction.week} onClose={() => setWeekAction(null)} />}
       {weekAction?.type === 'delete' && (
         <CmsDialog
           title="Delete Week"
           description={`Delete ${weekAction.week.week}?`}
           actionLabel="Delete Week"
           onClose={() => setWeekAction(null)}
-          onSubmit={() => {
-            setTasks((items) =>
-              items.map((task) =>
-                task.plan === 'Build E-Commerce Business' && task.week === weekAction.week.week
-                  ? { ...task, week: undefined }
-                  : task
-              )
-            );
-            setWeeks((items) => items.filter((item) => item.id !== weekAction.week.id));
-            setExpandedWeek(-1);
-            setWeekAction(null);
-          }}
+          onSubmit={() =>
+            deleteWeek.mutate(weekAction.week.id, {
+              onSuccess: () => {
+                setExpandedWeek(-1);
+                setWeekAction(null);
+              },
+            })
+          }
         >
-          <Text size="sm">
-            Linked tasks will be kept in this plan and on the Tasks page, without a week assignment.
-          </Text>
+          <Text size="sm">Tasks in this week will remain in the plan without a week assignment.</Text>
+          {deleteWeek.isError && (
+            <Alert color="red" mt="md">
+              Unable to delete this week.
+            </Alert>
+          )}
         </CmsDialog>
       )}
     </CmsPageLayout>

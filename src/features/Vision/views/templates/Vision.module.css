@@ -15,6 +15,20 @@
 }
 .hero h2 {
   margin: 18px 0 8px;
+  max-width: 700px;
+  overflow-wrap: anywhere;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #ffffffed, #ffffffb8 48%, #ffffff00 82%);
+  pointer-events: none;
+}
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 740px;
 }
 .heroDescription {
   max-width: 700px;
@@ -22,6 +36,7 @@
 }
 .editVision {
   position: absolute;
+  z-index: 2;
   top: 22px;
   right: 22px;
 }
@@ -40,7 +55,7 @@
 }
 .columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 20px;
 }
@@ -57,36 +72,54 @@
   color: #2864e8;
 }
 .wishlist {
-  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+.wishlistCard {
+  min-width: 0;
+  align-self: start;
+}
+.wishlistCard h3 {
+  margin: 0 0 4px;
+}
+.wishlistCard > p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .wishlistItem {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid #e8edf4;
+  border-radius: 10px;
+  background: #f9fbfe;
   color: #34445a;
+}
+.wishlistCheckbox {
+  flex: 1;
+  min-width: 0;
+}
+.wishlistLabel {
+  padding-left: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
-.wishlistItem input {
-  width: 20px;
-  height: 20px;
-  accent-color: #2864e8;
+.wishlistItem > button {
+  flex-shrink: 0;
 }
 .draft {
   display: grid;
   gap: 8px;
+  margin-top: 16px;
   padding: 12px;
   border: 2px solid #2864e8;
   border-radius: 12px;
   background: #f7faff;
-}
-.draft input {
-  width: 100%;
-  min-height: 38px;
-  padding: 9px;
-  border: 1px solid #dce3ed;
-  border-radius: 8px;
-  font: inherit;
 }
 .connectedList {
   display: grid;
@@ -134,8 +167,12 @@
   }
 
   .editVision {
-    position: static;
-    float: right;
+    position: relative;
+    top: auto;
+    right: auto;
+    display: block;
+    margin-left: auto;
+    margin-bottom: 18px;
   }
 }
 

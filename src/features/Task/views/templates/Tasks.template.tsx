@@ -19,16 +19,21 @@ import {
 import { IconPlus, IconSearch } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import { TaskCreateDialog } from '../components/TaskCreateDialog';
-import { plans } from '@features/Plan/views/data/plans';
 import styles from './Tasks.module.css';
 
 import { taskStatus, taskStatuses } from '../data/tasks';
 import { useTasks } from '../data/taskStore';
 import { TaskProgress, TaskStatusBadge } from '../components/TaskProgress';
 import { TaskActions } from '../components/TaskActions';
+import { useListPlans } from '@core/Plan/infrastructure/plan.hook';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
 
 export function TasksTemplate() {
-  const [tasks] = useTasks();
+  const [tasks, , tasksQuery] = useTasks();
+  const plansQuery = useListPlans();
+  const goalsQuery = useListGoals();
+  const plans = plansQuery.data?.data ?? [];
+  const goals = goalsQuery.data?.data ?? [];
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All Tasks');
   const [page, setPage] = useState(1);
@@ -66,6 +71,16 @@ export function TasksTemplate() {
           </Paper>
         ))}
       </Box>
+      {(tasksQuery.isError || plansQuery.isError || goalsQuery.isError) && (
+        <Text c="red" mb="md">
+          Unable to load task data. Refresh the page and try again.
+        </Text>
+      )}
+      {(tasksQuery.isLoading || plansQuery.isLoading || goalsQuery.isLoading) && (
+        <Text c="dimmed" mb="md">
+          Loading tasks…
+        </Text>
+      )}
       <Group justify="space-between" className={styles.toolbar}>
         <Group className={styles.statusFilters}>
           {['All Tasks', ...taskStatuses].map((item) => (
@@ -113,8 +128,12 @@ export function TasksTemplate() {
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    {task.plan ? (
-                      <Anchor component={Link} href="/plans/detail" size="sm">
+                    {plans.find((item) => item.name === task.plan) ? (
+                      <Anchor
+                        component={Link}
+                        href={`/plans/detail?id=${encodeURIComponent(plans.find((item) => item.name === task.plan)!.id)}`}
+                        size="sm"
+                      >
                         {task.plan}
                       </Anchor>
                     ) : (
@@ -124,8 +143,12 @@ export function TasksTemplate() {
                     )}
                   </Table.Td>
                   <Table.Td>
-                    {plans.find((item) => item.name === task.plan)?.goal ? (
-                      <Anchor component={Link} href="/goals/detail" size="sm">
+                    {goals.find((item) => item.title === plans.find((plan) => plan.name === task.plan)?.goal) ? (
+                      <Anchor
+                        component={Link}
+                        href={`/goals/detail?id=${encodeURIComponent(goals.find((item) => item.title === plans.find((plan) => plan.name === task.plan)?.goal)!.id)}`}
+                        size="sm"
+                      >
                         {plans.find((item) => item.name === task.plan)?.goal}
                       </Anchor>
                     ) : (
@@ -136,9 +159,9 @@ export function TasksTemplate() {
                   </Table.Td>
                   <Table.Td>
                     <Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                      {task.due
+                      {(task.effectiveDue ?? task.due)
                         ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(
-                            new Date(`${task.due}T00:00:00`)
+                            new Date(`${task.effectiveDue ?? task.due}T00:00:00`)
                           )
                         : 'No due date'}
                     </Text>

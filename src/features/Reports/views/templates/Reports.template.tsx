@@ -1,70 +1,42 @@
 'use client';
 
-import { useTasks } from '@features/Task/views/data/taskStore';
-import { taskStatus } from '@features/Task/views/data/tasks';
 import { useState } from 'react';
-import { Badge, Box, Button, Group, Paper, Select, Text, Title } from '@mantine/core';
+import { Alert, Badge, Box, Button, Group, Paper, Select, Text, Title } from '@mantine/core';
 import { AreaChart } from '@mantine/charts';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import styles from './Reports.module.css';
 import { EntityReport } from '../components/EntityReport';
-
-function getWeeksInYear(year: number) {
-  const firstThursday = new Date(year, 0, 4);
-  const firstMonday = new Date(firstThursday);
-  firstMonday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7));
-
-  const weeks: { date: Date; month: number; label: string }[] = [];
-  let weekNumber = 1;
-  for (const start = new Date(firstMonday); ; start.setDate(start.getDate() + 7)) {
-    const thursday = new Date(start);
-    thursday.setDate(start.getDate() + 3);
-    if (thursday.getFullYear() > year) break;
-    if (thursday.getFullYear() === year) {
-      weeks.push({ date: thursday, month: thursday.getMonth(), label: `Week ${weekNumber}` });
-    }
-    weekNumber += 1;
-  }
-
-  return weeks;
-}
+import { useGetOverviewReport, useGetWeeklyReport } from '@core/Report/infrastructure/report.hook';
 
 export function ReportsTemplate() {
-  const [tasks] = useTasks();
+  const year = new Date().getFullYear();
+  const { data: overviewResponse, isLoading: overviewLoading, isError: overviewError } = useGetOverviewReport();
+  const { data: weeklyResponse, isLoading: weeklyLoading, isError: weeklyError } = useGetWeeklyReport(year);
   const [activeTab, setActiveTab] = useState('Success Rate');
-  const [period, setPeriod] = useState('This Year (2026)');
-  const completed = tasks.filter((task) => taskStatus(task) === 'Completed').length;
-  const failed = tasks.filter((task) => taskStatus(task) === 'Failed').length;
-  const rate = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
+  const [period, setPeriod] = useState(`This Year (${year})`);
+  const overview = overviewResponse?.data;
+  const completed = overview?.tasks.completed ?? 0;
+  const failed = overview?.tasks.failed ?? 0;
+  const totalTasks = overview?.tasks.total ?? 0;
+  const rate = totalTasks ? Math.round((completed / totalTasks) * 100) : 0;
   const now = new Date();
   const periodStart =
-    period === 'This Year (2026)'
-      ? new Date(2026, 0, 1)
+    period === `This Year (${year})`
+      ? new Date(year, 0, 1)
       : period === 'This Quarter'
         ? new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
         : new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  const periodEnd = period === 'This Year (2026)' ? new Date(2026, 11, 31, 23, 59, 59, 999) : now;
-  const weeklyTrend = getWeeksInYear(2026)
-    .filter(({ date }) => date >= periodStart && date <= periodEnd)
-    .map(({ month, label }) => {
-      const week = label;
-      const weeklyTasks = tasks.filter((task) => task.week === week);
-      const successCount = weeklyTasks.filter((task) => taskStatus(task) === 'Completed').length;
-      const failedCount = weeklyTasks.filter((task) => taskStatus(task) === 'Failed').length;
-      const total = weeklyTasks.length;
-      return {
-        week,
-        month,
-        successRate: total ? (successCount / total) * 100 : null,
-        failedRate: total ? (failedCount / total) * 100 : null,
-      };
-    });
-  const firstWeekWithData = weeklyTrend.findIndex((week) => week.successRate !== null || week.failedRate !== null);
+  const periodEnd = period === `This Year (${year})` ? new Date(year, 11, 31, 23, 59, 59, 999) : now;
+  const weeklyTrend = (weeklyResponse?.data ?? [])
+    .map((entry) => ({ ...entry, date: new Date(year, entry.month - 1, 1) }))
+    .filter(({ date }) => date >= periodStart && date <= periodEnd);
+  const hasWeeklyData = weeklyTrend.some((week) => week.successRate !== null);
+  const firstWeekWithData = weeklyTrend.findIndex((week) => week.successRate !== null);
   const chartData = weeklyTrend.map((week, index) =>
-    index < firstWeekWithData ? { ...week, successRate: 0, failedRate: 0 } : week
+    index < firstWeekWithData ? { ...week, successRate: 0, successCount: 0, failedCount: 0 } : week
   );
   const monthGroups = weeklyTrend.reduce<{ label: string; count: number }[]>((groups, item) => {
-    const label = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(2026, item.month, 1));
+    const label = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(year, item.month - 1, 1));
     const lastGroup = groups[groups.length - 1];
     if (lastGroup?.label === label) lastGroup.count += 1;
     else groups.push({ label, count: 1 });
@@ -90,8 +62,8 @@ export function ReportsTemplate() {
           <Select
             className={styles.periodSelect}
             value={period}
-            onChange={(value) => setPeriod(value ?? 'This Year (2026)')}
-            data={['This Year (2026)', 'Last 12 Months', 'This Quarter']}
+            onChange={(value) => setPeriod(value ?? `This Year (${year})`)}
+            data={[`This Year (${year})`, 'Last 12 Months', 'This Quarter']}
             aria-label="Report period"
             allowDeselect={false}
             size="sm"
@@ -105,18 +77,23 @@ export function ReportsTemplate() {
         <EntityReport category={activeTab} />
       ) : (
         <>
+          {(overviewError || weeklyError) && (
+            <Alert color="red" title="Unable to load reports" mb="md">
+              Refresh the page or try again later.
+            </Alert>
+          )}
+          {(overviewLoading || weeklyLoading) && (
+            <Text c="dimmed" mb="md">
+              Loading report data…
+            </Text>
+          )}
           <Group className={styles.stats}>
             {[
-              [
-                'TASK SUCCESS',
-                `${rate}%`,
-                `${completed} of ${tasks.length} tasks reached their success target`,
-                'Completed',
-              ],
-              ['FAILED TASKS', `${failed}`, 'Below the success target after the due date', 'Failed'],
+              ['TASK SUCCESS', `${rate}%`, `${completed} of ${totalTasks} tasks completed`, 'Completed'],
+              ['FAILED TASKS', `${failed}`, 'Marked failed or below the success target after the deadline', 'Failed'],
               [
                 'ACTIVE TASKS',
-                `${tasks.length - completed - failed}`,
+                `${overview?.tasks.active ?? 0}`,
                 'To do and in progress before their deadline',
                 'Active',
               ],
@@ -140,15 +117,20 @@ export function ReportsTemplate() {
           <Paper className={styles.card} mt="lg">
             <Group justify="space-between" align="flex-start">
               <Box>
-                <Title order={3}>Weekly Task Rates</Title>
-                <Text c="dimmed">Success and failed tasks as a share of all tasks in each week.</Text>
+                <Title order={3}>Weekly Task Success Rate</Title>
+                <Text c="dimmed">Completed tasks as a share of all tasks in each week.</Text>
               </Box>
             </Group>
+            {!weeklyLoading && !weeklyError && !hasWeeklyData && (
+              <Text c="dimmed" mt="md">
+                No task data for this period. Assign tasks to a scheduled week or set a due date.
+              </Text>
+            )}
             <Box
               className={styles.chartScroll}
               tabIndex={0}
               role="region"
-              aria-label="Weekly task rates chart, scroll horizontally to see all months"
+              aria-label="Weekly task success rate chart, scroll horizontally to see all months"
             >
               <Box style={{ minWidth: Math.max(weeklyTrend.length * 16, 280) }}>
                 <AreaChart
@@ -156,12 +138,49 @@ export function ReportsTemplate() {
                   h="clamp(260px, 45vh, 360px)"
                   data={chartData}
                   dataKey="week"
-                  series={[
-                    { name: 'successRate', label: 'Success Rate', color: 'teal.6' },
-                    { name: 'failedRate', label: 'Failed Rate', color: 'red.6' },
-                  ]}
+                  series={[{ name: 'successRate', label: 'Success Rate', color: 'teal.6' }]}
+                  tooltipProps={{
+                    content: ({ active, label }) => {
+                      const week = chartData.find((entry) => entry.week === label);
+                      if (!active || !week || week.successRate === null) return null;
+                      return (
+                        <Paper withBorder shadow="md" radius="md" p="md" miw={200}>
+                          <Text fw={600} mb="xs">
+                            {week.week}
+                            <Text component="span" display="block" size="xs" c="dimmed" fw={400}>
+                              {new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(week.date)}
+                            </Text>
+                            {week.start && week.end && (
+                              <Text component="span" display="block" size="xs" c="dimmed" fw={400}>
+                                {new Intl.DateTimeFormat('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  timeZone: 'UTC',
+                                }).formatRange(new Date(week.start), new Date(week.end))}
+                              </Text>
+                            )}
+                          </Text>
+                          <Group justify="space-between" gap="lg">
+                            <Text c="teal">Success Rate</Text>
+                            <Text fw={600}>{week.successRate.toFixed(0)}%</Text>
+                          </Group>
+                          <Group justify="space-between" gap="lg" mt={4}>
+                            <Text>Successful tasks</Text>
+                            <Text fw={600}>{week.successCount}</Text>
+                          </Group>
+                          <Group justify="space-between" gap="lg" mt={4}>
+                            <Text>Failed tasks</Text>
+                            <Text fw={600}>{week.failedCount}</Text>
+                          </Group>
+                        </Paper>
+                      );
+                    },
+                  }}
                   curveType="monotone"
                   connectNulls={false}
+                  withDots
+                  dotProps={{ r: 4 }}
                   fillOpacity={0.18}
                   gridAxis="x"
                   tickLine="none"

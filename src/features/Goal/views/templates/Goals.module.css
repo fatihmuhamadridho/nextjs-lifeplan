@@ -12,6 +12,7 @@
   gap: 12px;
   margin-top: 22px;
 }
+
 .emptyState {
   display: flex;
   min-height: 340px;
@@ -24,6 +25,7 @@
   background: #fff;
   text-align: center;
 }
+
 .emptyIcon {
   display: grid;
   width: 72px;
@@ -35,10 +37,12 @@
   background: #f0f6ff;
   color: #2864e8;
 }
+
 .emptyState h2 {
   margin: 0 0 10px;
   font-size: 22px;
 }
+
 .emptyState p {
   max-width: 430px;
   margin: 0 0 24px;
@@ -100,16 +104,6 @@
   flex: 1;
 }
 
-.menu {
-  position: absolute;
-  z-index: 2;
-  top: 58px;
-  right: 18px;
-  display: grid;
-  padding: 8px;
-  box-shadow: 0 8px 28px #17203324;
-}
-
 @media (max-width: 760px) {
   .goalRow {
     display: grid;
@@ -119,31 +113,38 @@
     min-height: 0;
     padding: 14px;
   }
+
   .goalInfo {
     min-width: 0;
     grid-column: 2;
     grid-row: 1;
   }
+
   .goalRow > button {
     grid-column: 3;
     grid-row: 1;
   }
+
   .metrics {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
     min-width: 0;
   }
+
   .progress {
     width: auto;
   }
+
   .metrics :global(.mantine-Badge-root) {
     flex: none;
   }
+
   .heading {
     align-items: flex-start;
     gap: 16px;
   }
+
   .heading h1 {
     font-size: 25px;
   }
@@ -155,15 +156,18 @@
     grid-template-columns: 46px minmax(0, 1fr) minmax(220px, 38%) 36px;
     gap: 12px;
   }
+
   .goalInfo {
     min-width: 0;
   }
+
   .metrics {
     grid-column: 3;
     grid-row: 1;
     width: 100%;
     min-width: 0;
   }
+
   .goalRow > button {
     grid-column: 4;
     grid-row: 1;

@@ -1,39 +1,45 @@
 'use client';
+
 import { useState, type FormEvent } from 'react';
 import { Alert, Box, Button, Group, Paper, PasswordInput, Text, Title } from '@mantine/core';
 import { CmsPageLayout } from '@components/CmsPageLayout';
+import { useChangePassword } from '@core/User/infrastructure/account.hook';
 import styles from './ChangePassword.module.css';
 
 export function ChangePasswordTemplate() {
-  const [current, setCurrent] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [unavailable, setUnavailable] = useState(false);
-  const currentError = current ? undefined : 'Enter your current password.';
-  const passwordError =
-    password.length < 8
-      ? 'Use at least 8 characters.'
-      : password === current
-        ? 'Choose a different password from your current password.'
-        : undefined;
-  const confirmError = !confirm
-    ? 'Confirm your new password.'
-    : confirm !== password
-      ? 'Passwords do not match.'
-      : undefined;
-  const reset = () => {
-    setCurrent('');
-    setPassword('');
-    setConfirm('');
-    setSubmitted(false);
-    setUnavailable(false);
-  };
+  const changePassword = useChangePassword();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
-    if (!currentError && !passwordError && !confirmError) setUnavailable(true);
+    if (newPassword.length < 8 || newPassword.length > 256) {
+      setError('Your new password must contain 8 to 256 characters.');
+      return;
+    }
+    if (newPassword !== confirmation) {
+      setError('The new password and confirmation do not match.');
+      return;
+    }
+    setError('');
+    setSaved(false);
+    changePassword.mutate(
+      { currentPassword, newPassword },
+      {
+        onSuccess: () => {
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmation('');
+          setSaved(true);
+        },
+        onError: () => setError('Unable to change the password. Check your current password and try again.'),
+      }
+    );
   };
+
   return (
     <CmsPageLayout
       active="Profile"
@@ -45,88 +51,87 @@ export function ChangePasswordTemplate() {
     >
       <Box className={styles.heading}>
         <Title order={1}>Change Password</Title>
-        <Text c="dimmed">Update the password you use to access your account.</Text>
+        <Text c="dimmed">Choose a new password for your account.</Text>
       </Box>
       <Paper className={styles.panel}>
-        <Box component="form" onSubmit={submit} className={styles.form}>
+        <form className={styles.form} onSubmit={submit}>
           <Box className={styles.fields}>
-            <PasswordInput
-              classNames={{
-                root: styles.field,
-                label: styles.fieldLabel,
-                wrapper: styles.inputWrapper,
-                description: styles.hint,
-                error: styles.hint,
-              }}
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
-              label="Current password"
-              placeholder="Enter current password"
-              size="md"
-              autoComplete="current-password"
-              required
-              value={current}
-              onChange={(event) => {
-                setCurrent(event.currentTarget.value);
-                setUnavailable(false);
-              }}
-              error={submitted ? currentError : undefined}
-            />
-            <PasswordInput
-              classNames={{
-                root: styles.field,
-                label: styles.fieldLabel,
-                wrapper: styles.inputWrapper,
-                description: styles.hint,
-                error: styles.hint,
-              }}
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
-              label="New password"
-              placeholder="Create a new password"
-              size="md"
-              description="Use at least 8 characters."
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(event) => {
-                setPassword(event.currentTarget.value);
-                setUnavailable(false);
-              }}
-              error={submitted ? passwordError : undefined}
-            />
-            <PasswordInput
-              classNames={{
-                root: styles.field,
-                label: styles.fieldLabel,
-                wrapper: styles.inputWrapper,
-                description: styles.hint,
-                error: styles.hint,
-              }}
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
-              label="Confirm new password"
-              placeholder="Re-enter new password"
-              size="md"
-              autoComplete="new-password"
-              required
-              value={confirm}
-              onChange={(event) => {
-                setConfirm(event.currentTarget.value);
-                setUnavailable(false);
-              }}
-              error={submitted ? confirmError : undefined}
-            />
-            {unavailable && (
-              <Alert className={styles.notice} color="orange" title="Password has not been changed" role="status">
-                Password changes are not available yet. The account service has not been connected.
-              </Alert>
-            )}
+            <Box className={styles.field}>
+              <label className={styles.fieldLabel} htmlFor="current-password">
+                Current password
+              </label>
+              <PasswordInput
+                id="current-password"
+                className={styles.inputWrapper}
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.currentTarget.value)}
+                autoComplete="current-password"
+                required
+              />
+            </Box>
+            <Box className={styles.field}>
+              <label className={styles.fieldLabel} htmlFor="new-password">
+                New password
+              </label>
+              <PasswordInput
+                id="new-password"
+                className={styles.inputWrapper}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.currentTarget.value)}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={256}
+                required
+              />
+              <Text className={styles.hint} c="dimmed">
+                Use 8 to 256 characters.
+              </Text>
+            </Box>
+            <Box className={styles.field}>
+              <label className={styles.fieldLabel} htmlFor="confirm-password">
+                Confirm new password
+              </label>
+              <PasswordInput
+                id="confirm-password"
+                className={styles.inputWrapper}
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.currentTarget.value)}
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={256}
+                required
+              />
+            </Box>
           </Box>
-          <Group justify="flex-end" className={styles.actions}>
-            <Button type="button" variant="default" onClick={reset}>
-              Cancel
+          {error && (
+            <Alert className={styles.notice} color="red">
+              {error}
+            </Alert>
+          )}
+          {saved && (
+            <Alert className={styles.notice} color="teal">
+              Password changed successfully.
+            </Alert>
+          )}
+          <Group className={styles.actions} justify="flex-end">
+            <Button
+              type="reset"
+              variant="default"
+              onClick={() => {
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmation('');
+                setError('');
+                setSaved(false);
+              }}
+            >
+              Clear
             </Button>
-            <Button type="submit">Change Password</Button>
+            <Button type="submit" loading={changePassword.isPending}>
+              Update Password
+            </Button>
           </Group>
-        </Box>
+        </form>
       </Paper>
     </CmsPageLayout>
   );

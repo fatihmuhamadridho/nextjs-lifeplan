@@ -1,149 +1,134 @@
 'use client';
 
 import { useState } from 'react';
-import { CmsDialog } from '@components/CmsDialog';
+import { Alert, Select, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { Select, TextInput, Textarea } from '@mantine/core';
-import type { PlanItem, PlanStatus } from '../data/plans';
+import { CmsDialog } from '@components/CmsDialog';
+import type { Plan as PlanItem, PlanStatus } from '@core/Plan/domain/plan.interface';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
+import { useCreatePlan, useUpdatePlan } from '@core/Plan/infrastructure/plan.hook';
 
 const planStatuses: PlanStatus[] = ['In Progress', 'Completed', 'On Hold', 'Not Started'];
 
 type PlanDialogProps = {
-  mode: 'add-plan' | 'edit-plan' | 'add-week';
+  mode: 'add-plan' | 'edit-plan';
   onClose: () => void;
   plan?: PlanItem;
-  onSave?: (plan: PlanItem) => void;
+  initialGoal?: string;
 };
 
-export function PlanDialog({ mode, onClose, plan, onSave }: PlanDialogProps) {
-  const [week, setWeek] = useState(43);
-  const isWeek = mode === 'add-week';
+function dateInputFromLabel(value?: string) {
+  if (!value) return null;
+  const parsed = new Date(`${value} 1`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);
+}
+
+function monthLabel(value: string) {
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(`${value}T00:00:00`));
+}
+
+export function PlanDialog({ mode, onClose, plan, initialGoal }: PlanDialogProps) {
   const isEdit = mode === 'edit-plan';
+  const goalsQuery = useListGoals({ archived: false });
+  const createPlan = useCreatePlan();
+  const updatePlan = useUpdatePlan();
   const [startDate, setStartDate] = useState<string | null>(() => {
-    const date = plan?.timeline.split('–')[0]?.trim();
-    return date && Number.isFinite(Date.parse(`${date} 1`)) ? new Date(`${date} 1`).toISOString().slice(0, 10) : null;
+    const start = plan?.timeline.split('–')[0]?.trim();
+    return dateInputFromLabel(start);
   });
   const [endDate, setEndDate] = useState<string | null>(() => {
-    const date = plan?.timeline.split('–')[1]?.trim();
-    return date && Number.isFinite(Date.parse(`${date} 1`)) ? new Date(`${date} 1`).toISOString().slice(0, 10) : null;
+    const end = plan?.timeline.split('–')[1]?.trim();
+    return dateInputFromLabel(end);
   });
-  const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState(plan?.name ?? '');
+  const [goal, setGoal] = useState(initialGoal ?? plan?.goal ?? '');
+  const [focus, setFocus] = useState(plan?.focus ?? '');
   const [status, setStatus] = useState<PlanStatus>(plan?.status ?? 'Not Started');
+  const [error, setError] = useState('');
   const datesValid = Boolean(startDate && endDate && endDate >= startDate);
+  const mutation = isEdit ? updatePlan : createPlan;
 
   return (
     <CmsDialog
-      title={isWeek ? 'Add Week' : isEdit ? 'Edit Plan' : 'Add Plan'}
-      description={
-        isWeek
-          ? 'Schedule a new weekly execution sprint under Build E-Commerce Business.'
-          : 'Create a strategic milestone or execution stage for this goal.'
-      }
-      actionLabel={isWeek ? 'Add Week' : isEdit ? 'Save Changes' : 'Create Plan'}
+      title={isEdit ? 'Edit Plan' : 'Add Plan'}
+      description={isEdit ? 'Update this plan.' : 'Create a plan under one of your active goals.'}
+      actionLabel={isEdit ? 'Save Changes' : 'Create Plan'}
       onClose={onClose}
       onSubmit={() => {
-        setSubmitted(true);
-        if (isWeek) {
-          onClose();
+        if (!name.trim() || !goal || !datesValid) {
+          setError('Enter a name, choose an active goal, and select a valid date range.');
           return;
         }
-        if (datesValid && name.trim()) {
-          onSave?.({
-            ...(plan ?? {
-              goal: 'Build Passive Income',
-              progress: 0,
-              weeks: 0,
-              tasks: 0,
-              focus: '',
-              status: 'Not Started',
-            }),
-            name: name.trim(),
-            timeline: `${new Date(startDate!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} – ${new Date(endDate!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`,
-            status,
-          });
-          onClose();
-        }
+        setError('');
+        const input = {
+          name: name.trim(),
+          goal,
+          timeline: `${monthLabel(startDate!)} – ${monthLabel(endDate!)}`,
+          progress: plan?.progress ?? 0,
+          weeks: plan?.weeks ?? 0,
+          tasks: plan?.tasks ?? 0,
+          focus: focus.trim(),
+          status,
+        };
+        const options = {
+          onSuccess: onClose,
+          onError: () => setError('Unable to save this plan. Check that its goal is active and try again.'),
+        };
+        if (isEdit && plan) updatePlan.mutate({ id: plan.id, input }, options);
+        else createPlan.mutate(input, options);
       }}
     >
-      {isWeek ? (
-        <>
-          <TextInput
-            label="Week Number"
-            type="number"
-            required
-            min={1}
-            step={1}
-            value={week}
-            onChange={(event) => setWeek(Number(event.target.value))}
-          />
-          <DatePickerInput
-            type="range"
-            label="Date Range"
-            required
-            placeholder="Select date range"
-            valueFormat="D MMM YYYY"
-          />
-          <Textarea
-            label={
-              <>
-                Weekly Focus / Objective{' '}
-                <span style={{ color: '#8392a7', fontSize: 12, fontWeight: 400 }}>(optional)</span>
-              </>
-            }
-            placeholder="e.g. Finalize payment gateway setup and launch initial ad campaign..."
-            minRows={3}
-          />
-        </>
-      ) : (
-        <>
-          <TextInput
-            label="Plan Title"
-            required
-            value={name}
-            onChange={(event) => setName(event.currentTarget.value)}
-            placeholder="e.g. Build E-Commerce Business"
-            error={submitted && !name.trim() ? 'Enter a plan title' : undefined}
-          />
-          <Textarea
-            label={
-              <>
-                Description <span style={{ color: '#8392a7', fontSize: 12, fontWeight: 400 }}>(optional)</span>
-              </>
-            }
-            placeholder="Briefly describe the objective or scope of this milestone..."
-            minRows={3}
-          />
-          <DatePickerInput
-            label="Start date"
-            required
-            placeholder="Select start date"
-            value={startDate}
-            onChange={setStartDate}
-            valueFormat="D MMM YYYY"
-            error={submitted && !startDate ? 'Select a start date' : undefined}
-          />
-          <DatePickerInput
-            label="End date"
-            required
-            placeholder="Select end date"
-            value={endDate}
-            onChange={setEndDate}
-            minDate={startDate ?? undefined}
-            valueFormat="D MMM YYYY"
-            error={submitted && !datesValid ? 'Select an end date on or after the start date' : undefined}
-          />
-          <Select
-            label="Status"
-            data={planStatuses}
-            value={status}
-            onChange={(value) => {
-              if (value) setStatus(value as PlanStatus);
-            }}
-            allowDeselect={false}
-          />
-        </>
-      )}
+      {error && <Alert color="red">{error}</Alert>}
+      {goalsQuery.isError && <Alert color="red">Unable to load active goals.</Alert>}
+      <TextInput
+        label="Plan title"
+        required
+        value={name}
+        onChange={(event) => setName(event.currentTarget.value)}
+        placeholder="e.g. Build E-Commerce Business"
+      />
+      <Select
+        label="Goal"
+        required
+        data={(goalsQuery.data?.data ?? []).map((item) => ({ value: item.title, label: item.title }))}
+        value={goal}
+        onChange={(value) => setGoal(value ?? '')}
+        searchable
+        disabled={Boolean(initialGoal)}
+        placeholder="Select an active goal"
+        nothingFoundMessage="No active goals found"
+      />
+      <TextInput
+        label="Focus"
+        value={focus}
+        onChange={(event) => setFocus(event.currentTarget.value)}
+        placeholder="What will this plan focus on?"
+      />
+      <DatePickerInput
+        label="Start date"
+        required
+        placeholder="Select start date"
+        value={startDate}
+        onChange={setStartDate}
+        valueFormat="D MMM YYYY"
+      />
+      <DatePickerInput
+        label="End date"
+        required
+        placeholder="Select end date"
+        value={endDate}
+        onChange={setEndDate}
+        minDate={startDate ?? undefined}
+        valueFormat="D MMM YYYY"
+      />
+      <Select
+        label="Status"
+        data={planStatuses}
+        value={status}
+        onChange={(value) => value && setStatus(value as PlanStatus)}
+        allowDeselect={false}
+      />
+      {mutation.isPending && <Alert color="blue">Saving plan…</Alert>}
     </CmsDialog>
   );
 }

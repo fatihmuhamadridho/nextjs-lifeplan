@@ -108,28 +108,90 @@
   gap: 14px;
   margin-top: 18px;
 }
-.week {
-  display: grid;
-  grid-template-columns: 24px minmax(170px, 1fr) 44px minmax(130px, 1fr) 32px;
+.emptyWeeks {
+  display: flex;
+  min-height: 280px;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 18px;
+  justify-content: center;
+  padding: 36px 24px;
   border: 1px solid #e5eaf1;
   border-radius: 14px;
   background: #fff;
-  cursor: pointer;
+  text-align: center;
+}
+.emptyWeeksIcon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 16px;
+  place-items: center;
+  border: 1px solid #dce8ff;
+  border-radius: 16px;
+  background: #f0f6ff;
+  color: #2864e8;
+}
+.emptyWeeks h4 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+  line-height: 1.4;
+}
+.emptyWeeks p {
+  max-width: 360px;
+  margin: 8px 0 20px;
+  color: #748297;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.week {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: #fff;
+}
+.weekHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.weekToggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) 18px;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+  border-radius: 4px;
+}
+.weekToggle:focus-visible {
+  outline: 2px solid #2864e8;
+  outline-offset: 5px;
 }
 .weekChevron {
   color: #91a0b2;
 }
-.weekInfo p {
-  margin: 3px 0 0;
+.weekInfo,
+.weekProgress {
+  min-width: 0;
+}
+.weekDates {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: #748297;
   font-size: 13px;
+  line-height: 1.5;
+}
+.weekDates svg {
+  flex-shrink: 0;
 }
 .focus {
-  grid-column: 2 / -1;
-  padding: 12px;
-  border-radius: 9px;
+  padding: 18px 20px 20px;
+  border-top: 1px solid #e8edf4;
   background: #f4f7fb;
 }
 .taskList {
@@ -169,6 +231,14 @@
   flex-shrink: 0;
 }
 @media (max-width: 760px) {
+  .emptyWeeks {
+    min-height: 260px;
+    padding: 30px 20px;
+  }
+  .emptyWeeks > button {
+    width: 100%;
+    max-width: 240px;
+  }
   .header {
     padding: 16px;
   }
@@ -185,17 +255,29 @@
   .summary {
     grid-template-columns: 1fr;
   }
-  .week {
-    grid-template-columns: 20px minmax(0, 1fr) 42px 32px;
-    gap: 8px;
-    padding: 12px;
+  .weekHeader {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
   }
-  .week > :nth-child(4) {
-    grid-column: 2 / 4;
+  .weekToggle {
+    grid-template-columns: minmax(0, 1fr) 18px;
+    gap: 16px 12px;
+  }
+  .weekProgress {
+    grid-column: 1 / -1;
     grid-row: 2;
   }
+  .weekChevron {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+  .weekDates {
+    font-size: 12px;
+  }
   .focus {
-    grid-column: 1 / -1;
+    padding: 16px;
   }
 }
 
@@ -230,9 +312,6 @@
   }
   .titleGroup h2 {
     font-size: 24px;
-  }
-  .week {
-    grid-template-columns: 24px minmax(0, 1fr) 44px minmax(110px, 0.6fr) 32px;
   }
   .taskRow {
     grid-template-columns: minmax(0, 1fr) 150px 90px 32px;

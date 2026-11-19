@@ -1,31 +1,35 @@
 import type { ReactNode } from 'react';
 import { Box, Button, Group, Paper, Progress, SimpleGrid, Text, Title } from '@mantine/core';
-import { useWeeks, weekDateRange, type WeekPlan } from '../data/weekStore';
+import { weekDateRange } from '../utils/weekDateRange';
+import type { Week } from '@core/Plan/domain/plan.interface';
 
 import { taskStatus, type Task } from '@features/Task/views/data/tasks';
 
 export function PlanOverview({
   tasks,
+  weeks,
   renderTasks,
   onViewWeeks,
   renderWeekActions,
 }: {
   tasks: Task[];
+  weeks: Week[];
   renderTasks: (week: string, preview?: boolean) => ReactNode;
   onViewWeeks: () => void;
-  renderWeekActions: (week: WeekPlan) => ReactNode;
+  renderWeekActions: (week: Week) => ReactNode;
 }) {
-  const [weeklyPlans] = useWeeks();
   const completed = tasks.filter((task) => taskStatus(task) === 'Completed').length;
   const percentage = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
-  const current = weeklyPlans.find((week) => week.week === 'Week 40') ?? weeklyPlans.at(-1);
+  const today = new Date().toISOString().slice(0, 10);
+  const current =
+    weeks.find((week) => week.start <= today && week.end >= today) ?? weeks.find((week) => week.start > today);
   const currentTasks = tasks.filter((task) => task.week === current?.week);
   const currentCompleted = currentTasks.filter((task) => taskStatus(task) === 'Completed').length;
   return (
     <Box mt="lg">
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
         {[
-          ['Total weeks', weeklyPlans.length],
+          ['Total weeks', weeks.length],
           ['Tasks completed', `${completed}/${tasks.length}`],
           ['Task completion', `${percentage}%`],
         ].map(([label, value]) => (

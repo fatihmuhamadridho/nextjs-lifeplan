@@ -1,69 +1,45 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
-import { initialTasks, type Task } from './tasks';
+import { useCallback, useMemo } from 'react';
+import { useCreateTask, useDeleteTask, useListTasks, useUpdateTask } from '@core/Task/infrastructure/task.hook';
+import type { TaskInput } from '@core/Task/domain/task.interface';
+import type { Task } from './tasks';
 
-const key = 'lifeplan-tasks-v2';
-let tasks = initialTasks;
-let loaded = false;
-const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((listener) => listener());
-const subscribe = (listener: () => void) => {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-};
 export function useTasks() {
-  const snapshot = useSyncExternalStore(
-    subscribe,
-    () => tasks,
-    () => initialTasks
+  const query = useListTasks();
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const tasks = useMemo(() => (query.data?.data ?? []) as Task[], [query.data?.data]);
+
+  const setTasks = useCallback(
+    (update: Task[] | ((current: Task[]) => Task[])) => {
+      const next = typeof update === 'function' ? update(tasks) : update;
+      const existingIds = new Set(tasks.map((task) => task.id));
+      const nextIds = new Set(next.map((task) => task.id));
+
+      tasks.filter((task) => !nextIds.has(task.id)).forEach((task) => deleteTask.mutate(String(task.id)));
+      next.forEach((task) => {
+        const previous = tasks.find((item) => item.id === task.id);
+        const input: TaskInput = {
+          title: task.title,
+          plan: task.plan,
+          due: task.due,
+          priority: task.priority as TaskInput['priority'],
+          current: task.current,
+          target: task.target,
+          successThreshold: task.successThreshold,
+          week: task.week ?? null,
+          ...(task.manualStatus !== previous?.manualStatus ? { manualStatus: task.manualStatus ?? null } : {}),
+        };
+        if (!existingIds.has(task.id)) createTask.mutate(input);
+        else if (previous && JSON.stringify(previous) !== JSON.stringify(task)) {
+          updateTask.mutate({ id: String(task.id), input });
+        }
+      });
+    },
+    [createTask, deleteTask, tasks, updateTask]
   );
-  useEffect(() => {
-    if (!loaded) {
-      loaded = true;
-      try {
-        const saved: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
-        if (
-          Array.isArray(saved) &&
-          saved.every(
-            (task) =>
-              typeof task.id === 'number' &&
-              typeof task.title === 'string' &&
-              typeof task.plan === 'string' &&
-              typeof task.priority === 'string' &&
-              (task.due === null || typeof task.due === 'string') &&
-              Number.isFinite(task.current) &&
-              task.current >= 0 &&
-              Number.isFinite(task.target) &&
-              task.target > 0 &&
-              Number.isFinite(task.successThreshold) &&
-              task.successThreshold > 0 &&
-              task.successThreshold <= 100 &&
-              (task.reachedAt === null || typeof task.reachedAt === 'string')
-          )
-        )
-          tasks = saved;
-      } catch {
-        /* Keep initial data when browser storage is unavailable. */
-      }
-      emit();
-    }
-    const timer = window.setInterval(() => {
-      tasks = [...tasks];
-      emit();
-    }, 60000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const setTasks = (update: Task[] | ((current: Task[]) => Task[])) => {
-    tasks = typeof update === 'function' ? update(tasks) : update;
-    try {
-      localStorage.setItem(key, JSON.stringify(tasks));
-    } catch {
-      /* Updates remain available for this session. */
-    }
-    emit();
-  };
-  return [snapshot, setTasks] as const;
+
+  return [tasks, setTasks, query] as const;
 }

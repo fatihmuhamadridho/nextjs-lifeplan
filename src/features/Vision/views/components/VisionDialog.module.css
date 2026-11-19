@@ -3,3 +3,14 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+
+.dialog {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+@media (max-width: 760px) {
+  .dialog {
+    max-height: calc(100dvh - 24px);
+  }
+}

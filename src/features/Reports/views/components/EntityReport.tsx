@@ -1,13 +1,17 @@
 import Link from 'next/link';
 import { Anchor, Badge, Box, Group, Paper, Progress, SimpleGrid, Table, Text, Title } from '@mantine/core';
-import { goals } from '@features/Goal/views/data/goals';
-import { plans } from '@features/Plan/views/data/plans';
 import { taskStatus, taskStatuses } from '@features/Task/views/data/tasks';
 import { useTasks } from '@features/Task/views/data/taskStore';
 import { TaskProgress, TaskStatusBadge } from '@features/Task/views/components/TaskProgress';
+import { useListGoals } from '@core/Goal/infrastructure/goal.hook';
+import { useListPlans } from '@core/Plan/infrastructure/plan.hook';
 
 export function EntityReport({ category }: { category: string }) {
-  const [tasks] = useTasks();
+  const [tasks, , tasksQuery] = useTasks();
+  const goalsQuery = useListGoals({ archived: false });
+  const plansQuery = useListPlans();
+  const goals = goalsQuery.data?.data ?? [];
+  const plans = plansQuery.data?.data ?? [];
   const isGoals = category === 'Goals';
   const isTasks = category === 'Tasks';
   const entries = isGoals ? goals : plans;
@@ -27,6 +31,16 @@ export function EntityReport({ category }: { category: string }) {
 
   return (
     <Box>
+      {(tasksQuery.isError || goalsQuery.isError || plansQuery.isError) && (
+        <Text c="red" mb="md">
+          Unable to load this report. Refresh the page and try again.
+        </Text>
+      )}
+      {(tasksQuery.isLoading || goalsQuery.isLoading || plansQuery.isLoading) && (
+        <Text c="dimmed" mb="md">
+          Loading report…
+        </Text>
+      )}
       <Group justify="space-between" mb="lg">
         <Box>
           <Title order={2} size={22}>
@@ -127,7 +141,7 @@ export function EntityReport({ category }: { category: string }) {
                       <Table.Td>{task.title}</Table.Td>
                       <Table.Td>{task.plan}</Table.Td>
                       <Table.Td>{task.priority}</Table.Td>
-                      <Table.Td>{task.due || 'No due date'}</Table.Td>
+                      <Table.Td>{task.effectiveDue ?? task.due ?? 'No due date'}</Table.Td>
                       <Table.Td>
                         <TaskProgress task={task} />
                       </Table.Td>
@@ -139,7 +153,15 @@ export function EntityReport({ category }: { category: string }) {
                 : ranked.map((entry) => (
                     <Table.Tr key={'title' in entry ? entry.title : entry.name}>
                       <Table.Td>
-                        <Anchor component={Link} href={isGoals ? '/goals/detail' : '/plans/detail'} size="sm">
+                        <Anchor
+                          component={Link}
+                          href={
+                            isGoals
+                              ? `/goals/detail?id=${encodeURIComponent('id' in entry ? entry.id : '')}`
+                              : `/plans/detail?id=${encodeURIComponent('id' in entry ? entry.id : '')}`
+                          }
+                          size="sm"
+                        >
                           {'title' in entry ? entry.title : entry.name}
                         </Anchor>
                       </Table.Td>

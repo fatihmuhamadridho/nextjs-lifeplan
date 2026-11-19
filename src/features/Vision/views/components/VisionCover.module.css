@@ -1,0 +1,59 @@
+.cover {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(160deg, #eef6ff 15%, #bedbe9 65%, #83b8ce);
+}
+.sun {
+  position: absolute;
+  top: 12%;
+  right: 14%;
+  width: 18%;
+  aspect-ratio: 1;
+  max-width: 140px;
+  border-radius: 50%;
+  background: #f7fcff;
+  box-shadow: 0 0 60px #ffffff80;
+}
+.backdrop,
+.foreground {
+  position: absolute;
+  right: -12%;
+  bottom: -48%;
+  width: 75%;
+  height: 95%;
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-12deg);
+  background: #7eacb6;
+}
+.foreground {
+  right: -28%;
+  bottom: -60%;
+  width: 92%;
+  background: #427b91;
+  transform: rotate(12deg);
+}
+.cover[data-style='Sunrise'] {
+  background: linear-gradient(150deg, #fff9ed 15%, #ffe3b8 65%, #f3bd9c);
+}
+.cover[data-style='Sunrise'] .sun {
+  background: #fff3c2;
+  box-shadow:
+    0 0 0 14px #ffefbe40,
+    0 0 70px #fff7cf;
+}
+.cover[data-style='Sunrise'] .backdrop {
+  background: #b7c8b2;
+}
+.cover[data-style='Sunrise'] .foreground {
+  background: #5b9186;
+}
+.cover[data-style='Minimal Gradient'] {
+  background:
+    radial-gradient(ellipse at 100% 0%, #c1bce980, transparent 65%),
+    radial-gradient(ellipse at 85% 100%, #a6e0d2b3, transparent 65%), linear-gradient(110deg, #f8faff, #dce9fb);
+}
+.cover[data-style='Minimal Gradient'] > * {
+  display: none;
+}

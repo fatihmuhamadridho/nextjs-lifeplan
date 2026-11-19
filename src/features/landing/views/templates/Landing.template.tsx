@@ -1,17 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, Text, Title } from '@mantine/core';
+import { Box, Burger, Button, Drawer, Text, Title, UnstyledButton } from '@mantine/core';
 import {
   IconArrowRight,
   IconCirclePlay,
-  IconMenu2,
   IconTarget,
   IconListCheck,
   IconChartBarPopular,
   IconTrophy,
-  IconCheck,
   IconHome2,
   IconBulb,
   IconCalendar,
@@ -65,33 +65,109 @@ const steps = [
 
 export function LandingTemplate() {
   const router = useRouter();
+  const [menuOpened, setMenuOpened] = useState(false);
+  useEffect(() => {
+    const desktopViewport = window.matchMedia('(min-width: 701px)');
+    const closeMenuOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setMenuOpened(false);
+    };
+    desktopViewport.addEventListener('change', closeMenuOnDesktop);
+    return () => desktopViewport.removeEventListener('change', closeMenuOnDesktop);
+  }, []);
+  const scrollToSection = (id: string) => {
+    setMenuOpened(false);
+    document.getElementById(id)?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      block: 'start',
+    });
+  };
 
   return (
     <Box role="main" className={styles.page}>
       <Box role="banner" className={styles.nav}>
-        <Link className={styles.brand} href="#top">
+        <UnstyledButton className={styles.brand} onClick={() => scrollToSection('top')}>
           <Box className={styles.brandMark}>
             <IconTarget size={17} aria-hidden="true" />
           </Box>
           LifePlan
-        </Link>
+        </UnstyledButton>
         <Box role="navigation" className={styles.navLinks} aria-label="Main navigation">
-          <Link href="#features">Features</Link>
-          <Link href="#how">How it works</Link>
-          <Link href="#pricing">Pricing</Link>
+          <UnstyledButton onClick={() => scrollToSection('features')}>Features</UnstyledButton>
+          <UnstyledButton onClick={() => scrollToSection('how')}>How it works</UnstyledButton>
+          <UnstyledButton onClick={() => scrollToSection('preview')}>Product preview</UnstyledButton>
         </Box>
         <Link className={styles.signIn} href="/login">
           Sign in
         </Link>
-        <Link className={styles.menu} href="#features" aria-label="Open navigation">
-          <IconMenu2 aria-hidden="true" />
-        </Link>
+        <Burger
+          className={styles.menu}
+          opened={menuOpened}
+          onClick={() => setMenuOpened((opened) => !opened)}
+          aria-label="Open navigation"
+          aria-expanded={menuOpened}
+          aria-controls="mobile-navigation"
+          size="sm"
+        />
         <Button variant="primary" size="medium" onClick={() => router.push('/register')}>
           <Box className={styles.buttonContent}>
             Get Started Free <IconArrowRight size={14} aria-hidden="true" />
           </Box>
         </Button>
       </Box>
+      <Drawer
+        opened={menuOpened}
+        onClose={() => setMenuOpened(false)}
+        title={
+          <Box className={styles.drawerBrand}>
+            <Box className={styles.brandMark}>
+              <IconTarget size={20} aria-hidden="true" />
+            </Box>
+            LifePlan
+          </Box>
+        }
+        position="left"
+        size="100%"
+        padding={0}
+        styles={{ content: { width: '100%', height: '100dvh', flex: '0 0 100%' } }}
+        classNames={{
+          content: styles.drawerContent,
+          header: styles.drawerHeader,
+          body: styles.drawerBody,
+          close: styles.drawerClose,
+        }}
+      >
+        <Box component="nav" id="mobile-navigation" aria-label="Mobile navigation" className={styles.mobileNavigation}>
+          <UnstyledButton onClick={() => scrollToSection('features')}>
+            <IconListCheck size={20} aria-hidden="true" />
+            Features
+            <IconArrowUpRight size={17} aria-hidden="true" />
+          </UnstyledButton>
+          <UnstyledButton onClick={() => scrollToSection('how')}>
+            <IconCirclePlay size={20} aria-hidden="true" />
+            How it works
+            <IconArrowUpRight size={17} aria-hidden="true" />
+          </UnstyledButton>
+          <UnstyledButton onClick={() => scrollToSection('preview')}>
+            <IconChartBarPopular size={20} aria-hidden="true" />
+            Product preview
+            <IconArrowUpRight size={17} aria-hidden="true" />
+          </UnstyledButton>
+        </Box>
+        <Box className={styles.drawerActions}>
+          <Link href="/login" onClick={() => setMenuOpened(false)}>
+            Sign in
+          </Link>
+          <Button
+            rightSection={<IconArrowRight size={16} />}
+            onClick={() => {
+              setMenuOpened(false);
+              router.push('/register');
+            }}
+          >
+            Get Started Free
+          </Button>
+        </Box>
+      </Drawer>
       <Box role="region" aria-label="Introduction" className={styles.hero} id="top">
         <Box className={styles.heroCopy}>
           <Text component="span" className={styles.eyebrow}>
@@ -107,15 +183,9 @@ export function LandingTemplate() {
                 Get Started Free <IconArrowRight size={14} aria-hidden="true" />
               </Box>
             </Button>
-            <Link href="#how" className={styles.secondary}>
+            <UnstyledButton onClick={() => scrollToSection('how')} className={styles.secondary}>
               <IconCirclePlay size={16} aria-hidden="true" /> See How It Works
-            </Link>
-          </Box>
-          <Box className={styles.heroPhoto}>
-            <Box className={styles.quote}>
-              <IconCheck size={15} aria-hidden="true" /> “A clearer, more intentional me.”
-              <Text component="small">LifePlan Member Experience</Text>
-            </Box>
+            </UnstyledButton>
           </Box>
           <Box className={styles.proof}>
             <Box className={styles.proofItem}>
@@ -140,8 +210,25 @@ export function LandingTemplate() {
             </Box>
           </Box>
         </Box>
+        <Box className={styles.heroPhoto}>
+          <Image
+            src="/images/lifeplan-journey.webp"
+            alt="A person planning in a notebook beside a winding path toward a sunlit mountain summit"
+            fill
+            sizes="(max-width: 700px) calc(100vw - 28px), (max-width: 1280px) 46vw, 560px"
+            preload
+            unoptimized
+            className={styles.heroImage}
+          />
+        </Box>
       </Box>
       <Box role="region" aria-label="Features" className={styles.features} id="features">
+        <Box className={styles.featureHeading}>
+          <Text component="span" className={styles.eyebrow}>
+            BUILT FOR YOUR BIGGER PICTURE
+          </Text>
+          <Title order={2}>Your vision. A plan. Real progress.</Title>
+        </Box>
         <Box className={styles.goalGrid}>
           {benefits.map(([icon, title, text]) => (
             <Box key={title} className={styles.goalCard}>
@@ -156,13 +243,18 @@ export function LandingTemplate() {
         <Text component="span" className={styles.eyebrow}>
           HOW IT WORKS
         </Text>
-        <Title order={2}>From vision to weekly progress — in 3 simple steps.</Title>
+        <Title order={2}>Big dreams, small steps.</Title>
+        <Text component="p" className={styles.howDescription}>
+          A simple rhythm to turn what matters to you into progress you can see.
+        </Text>
         <Box className={styles.steps}>
           {steps.map(([icon, title, text], i) => (
             <Box component="article" className={styles.step} key={title}>
-              <Box className={styles.goalIcon}>
-                {icon}
-                <Text component="b">{i + 1}</Text>
+              <Box className={styles.stepTop}>
+                <Text component="span" className={styles.stepNumber}>
+                  0{i + 1}
+                </Text>
+                <Box className={styles.goalIcon}>{icon}</Box>
               </Box>
               <Box>
                 <Title order={3}>{title}</Title>
@@ -172,7 +264,7 @@ export function LandingTemplate() {
           ))}
         </Box>
       </Box>
-      <Box role="region" aria-label="Product preview" className={styles.preview}>
+      <Box role="region" aria-label="Product preview" className={styles.preview} id="preview">
         <Box className={styles.previewCopy}>
           <Text component="span" className={styles.eyebrow}>
             PRODUCT PREVIEW
@@ -181,11 +273,6 @@ export function LandingTemplate() {
           <Text component="p">
             A simple, beautiful dashboard to manage your life vision, goals, plans, and weekly progress.
           </Text>
-          <Button variant="primary" size="medium" onClick={() => router.push('/register')}>
-            <Box className={styles.buttonContent}>
-              Get Started Free <IconArrowRight size={14} aria-hidden="true" />
-            </Box>
-          </Button>
         </Box>
         <Box className={styles.dashboard}>
           <Box className={styles.dashboardSidebar}>
@@ -353,34 +440,31 @@ export function LandingTemplate() {
           </Box>
         </Box>
       </Box>
-      <Box role="region" aria-label="Pricing and signup" className={styles.closing} id="pricing">
+      <Box role="region" aria-label="Get started" className={styles.closing} id="get-started">
         <Box>
-          <Text component="span" className={styles.eyebrow}>
-            READY TO BUILD A BRIGHTER TOMORROW?
-          </Text>
-          <Title order={2}>Turn your life vision into real progress.</Title>
-          <Text component="p">
-            Get started for free and take the first step towards a more intentional, fulfilling life.
-          </Text>
+          <Title order={2}>Your brighter future starts here.</Title>
+          <Text component="p">Make space for your goals. Take your first step today.</Text>
         </Box>
         <Button variant="primary" size="medium" onClick={() => router.push('/register')}>
           <Box className={styles.buttonContent}>
             Get Started Free <IconArrowRight size={14} aria-hidden="true" />
           </Box>
         </Button>
-        <Link href="#how" className={styles.secondary}>
-          <IconCirclePlay size={14} aria-hidden="true" /> See How It Works
-        </Link>
       </Box>
       <Box role="contentinfo" className={styles.footer}>
-        <Link className={styles.brand} href="#top">
+        <UnstyledButton className={styles.brand} onClick={() => scrollToSection('top')}>
           <Box className={styles.brandMark}>
             <IconTarget size={14} aria-hidden="true" />
           </Box>
           LifePlan
-        </Link>
-        <Text component="span">© 2025 LifePlan, Inc. All rights reserved.</Text>
-        <Link href="#top">Privacy Policy Terms of Service Contact Support</Link>
+        </UnstyledButton>
+        <Text component="span">
+          © {new Date().getFullYear()} LifePlan.
+          <Box component="span" className={styles.copyrightRights}>
+            {' '}
+            All rights reserved.
+          </Box>
+        </Text>
       </Box>
       <Box className={styles.mobileCta}>
         <Button variant="primary" size="large" onClick={() => router.push('/register')}>

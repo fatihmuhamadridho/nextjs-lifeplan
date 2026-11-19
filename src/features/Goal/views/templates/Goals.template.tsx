@@ -2,27 +2,26 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Badge, Box, Button, Group, Paper, Progress, Text, Title } from '@mantine/core';
+import { Alert, Box, Button, Group, Menu, Paper, Progress, Text, Title } from '@mantine/core';
 import { IconArchive, IconDotsVertical, IconPlus, IconTarget } from '@tabler/icons-react';
 import { CmsPageLayout } from '@components/CmsPageLayout';
 import { GoalCategoryIcon } from '@components/GoalCategoryIcon';
 import { CmsDialog } from '@components/CmsDialog';
-import { goals } from '../data/goals';
 import { GoalDialog } from '../components/GoalDialog';
 import styles from './Goals.module.css';
+import { useDeleteGoal, useListGoals, useUpdateGoal } from '@core/Goal/infrastructure/goal.hook';
+import type { Goal } from '@core/Goal/domain/goal.interface';
 
 export function GoalsTemplate() {
   const [dialog, setDialog] = useState<'add-goal' | 'edit-goal' | ''>('');
-  const [openMenu, setOpenMenu] = useState(-1);
   const [showArchived, setShowArchived] = useState(false);
-  const [archivedGoals, setArchivedGoals] = useState<string[]>([]);
-  const [deletedGoal, setDeletedGoal] = useState<string | null>(null);
-  const [deletedGoals, setDeletedGoals] = useState<string[]>([]);
-  const visibleGoals = goals.filter(
-    (goal) =>
-      !deletedGoals.includes(goal.title) &&
-      (showArchived ? archivedGoals.includes(goal.title) : !archivedGoals.includes(goal.title))
-  );
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [deletedGoal, setDeletedGoal] = useState<Goal | null>(null);
+  const [actionError, setActionError] = useState('');
+  const goalsQuery = useListGoals({ archived: showArchived });
+  const updateGoal = useUpdateGoal();
+  const deleteGoal = useDeleteGoal();
+  const visibleGoals = goalsQuery.data?.data ?? [];
 
   return (
     <CmsPageLayout active="Goals" goalCount={7}>
@@ -46,6 +45,22 @@ export function GoalsTemplate() {
         </Text>
       </Group>
 
+      {goalsQuery.isError && (
+        <Alert color="red" title="Unable to load goals" mb="md">
+          Refresh the page or try again later.
+        </Alert>
+      )}
+      {actionError && (
+        <Alert color="red" mb="md">
+          {actionError}
+        </Alert>
+      )}
+      {goalsQuery.isLoading && (
+        <Text c="dimmed" py="lg">
+          Loading goals…
+        </Text>
+      )}
+
       <Box className={styles.list}>
         {visibleGoals.length === 0 && (
           <Paper className={styles.emptyState}>
@@ -68,88 +83,114 @@ export function GoalsTemplate() {
           </Paper>
         )}
         {visibleGoals.map((goal) => {
-          const index = goals.indexOf(goal);
+          const index = visibleGoals.indexOf(goal);
           return (
-            <Paper className={styles.goalRow} key={goal.title}>
+            <Paper className={styles.goalRow} key={goal.id}>
               <Box className={styles.goalIcon} style={{ backgroundColor: goal.color }}>
                 <GoalCategoryIcon index={index} />
               </Box>
               <Box className={styles.goalInfo}>
-                <Link href="/goals/detail" className={styles.goalTitle}>
+                <Link href={`/goals/detail?id=${encodeURIComponent(goal.id)}`} className={styles.goalTitle}>
                   {goal.title}
                 </Link>
                 <Text c="dimmed">{goal.description}</Text>
               </Box>
               <Box className={styles.metrics}>
                 <Box className={styles.progress}>
-                  <Progress
-                    value={goal.progress}
-                    color={['teal', 'teal', 'orange', 'blue', 'red', 'teal', 'orange'][index]}
-                  />
+                  <Progress value={goal.progress} color={goal.color} />
                 </Box>
                 <b>{goal.progress}%</b>
-                <Badge variant="light">Dec 2030</Badge>
+                {goal.archived && (
+                  <Text size="xs" c="dimmed">
+                    Archived
+                  </Text>
+                )}
               </Box>
-              <Button
-                variant="subtle"
-                aria-label={`Actions for ${goal.title}`}
-                onClick={() => setOpenMenu(openMenu === index ? -1 : index)}
-              >
-                <IconDotsVertical size={17} />
-              </Button>
-              {openMenu === index && (
-                <Paper className={styles.menu}>
-                  <Button
-                    variant="subtle"
+              <Menu position="bottom-end" withinPortal shadow="md" width={170} offset={6}>
+                <Menu.Target>
+                  <Button variant="subtle" aria-label={`Actions for ${goal.title}`}>
+                    <IconDotsVertical size={17} />
+                  </Button>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
                     onClick={() => {
+                      setSelectedGoal(goal);
                       setDialog('edit-goal');
-                      setOpenMenu(-1);
                     }}
                   >
                     Edit Goal
-                  </Button>
+                  </Menu.Item>
                   {showArchived ? (
-                    <Button
-                      variant="subtle"
-                      color="red"
-                      onClick={() => {
-                        setDeletedGoal(goal.title);
-                        setOpenMenu(-1);
-                      }}
-                    >
-                      Delete Goal
-                    </Button>
+                    <>
+                      <Menu.Item
+                        onClick={() => {
+                          updateGoal.mutate(
+                            { id: goal.id, input: { archived: false } },
+                            { onError: () => setActionError('Unable to restore this goal. Try again.') }
+                          );
+                        }}
+                      >
+                        Restore Goal
+                      </Menu.Item>
+                      <Menu.Item
+                        color="red"
+                        onClick={() => {
+                          setDeletedGoal(goal);
+                          setActionError('');
+                        }}
+                      >
+                        Delete Goal
+                      </Menu.Item>
+                    </>
                   ) : (
-                    <Button
-                      variant="subtle"
+                    <Menu.Item
                       onClick={() => {
-                        setArchivedGoals([...archivedGoals, goal.title]);
-                        setOpenMenu(-1);
+                        updateGoal.mutate(
+                          { id: goal.id, input: { archived: true } },
+                          { onError: () => setActionError('Unable to archive this goal. Try again.') }
+                        );
                       }}
                     >
                       Archive
-                    </Button>
+                    </Menu.Item>
                   )}
-                </Paper>
-              )}
+                </Menu.Dropdown>
+              </Menu>
             </Paper>
           );
         })}
       </Box>
 
-      {dialog && <GoalDialog mode={dialog} onClose={() => setDialog('')} />}
+      {dialog && (
+        <GoalDialog
+          mode={dialog}
+          goal={selectedGoal ?? undefined}
+          onClose={() => {
+            setDialog('');
+            setSelectedGoal(null);
+          }}
+        />
+      )}
       {deletedGoal && (
         <CmsDialog
           title="Delete Goal"
-          description={`Delete ${deletedGoal}?`}
+          description={`Delete ${deletedGoal.title}?`}
           actionLabel="Delete Goal"
           onClose={() => setDeletedGoal(null)}
           onSubmit={() => {
-            setDeletedGoals((items) => [...items, deletedGoal]);
-            setDeletedGoal(null);
+            deleteGoal.mutate(deletedGoal.id, {
+              onSuccess: () => setDeletedGoal(null),
+              onError: () => setActionError('This goal could not be deleted. It may still have plans linked to it.'),
+            });
           }}
         >
-          <Text size="sm">This goal will be permanently removed from your goals.</Text>
+          <Text size="sm">This goal can be deleted after it is archived and all linked plans are removed.</Text>
+          {deleteGoal.isError && (
+            <Alert color="red" mt="md">
+              Unable to delete this goal. Archive it and remove linked plans first.
+            </Alert>
+          )}
         </CmsDialog>
       )}
     </CmsPageLayout>

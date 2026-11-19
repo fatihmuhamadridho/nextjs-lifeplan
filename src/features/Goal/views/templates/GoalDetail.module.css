@@ -5,6 +5,53 @@
   border-radius: 14px;
   background: #fff;
 }
+.emptyPlans {
+  display: flex;
+  min-height: 280px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 36px 24px;
+  border: 1px solid #e5eaf1;
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+.emptyPlansIcon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 16px;
+  place-items: center;
+  border: 1px solid #dce8ff;
+  border-radius: 16px;
+  background: #f0f6ff;
+  color: #2864e8;
+}
+.emptyPlans h4 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+  line-height: 1.4;
+}
+.emptyPlans p {
+  max-width: 360px;
+  margin: 8px 0 20px;
+  color: #748297;
+  font-size: 14px;
+  line-height: 1.6;
+}
+@media (max-width: 760px) {
+  .emptyPlans {
+    min-height: 260px;
+    padding: 30px 20px;
+  }
+  .emptyPlans > button {
+    width: 100%;
+    max-width: 240px;
+  }
+}
 .taskActions {
   width: 64px;
   text-align: center;
